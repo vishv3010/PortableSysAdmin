@@ -7,6 +7,9 @@ from platform_detect import get_platform_info
 from privilege import is_admin, get_current_user
 from diagnostics.system import SystemDiagnostic
 from diagnostics.network import NetworkDiagnostic
+from remediation.engine import RemediationEngine
+from remediation.linux.network import FlushDNSLinux
+from remediation.windows.network import FlushDNSWindows
 
 def clear_screen(platform_os):
     os.system('cls' if platform_os == 'windows' else 'clear')
@@ -36,6 +39,7 @@ def main():
         print("----------------------------------------------------")
         print("1. Quick System Diagnostic")
         print("2. Network Diagnostic")
+        print("3. Remediation Menu")
         print("0. Exit")
         print("----------------------------------------------------")
         
@@ -63,6 +67,25 @@ def main():
                 
             input("\nPress Enter to continue...")
             
+
+        elif choice == '3':
+            print("\n[REMEDIATION MENU]")
+            print("1. Flush DNS Cache (Dry Run)")
+            print("2. Flush DNS Cache (Execute)")
+            print("0. Back")
+            r_choice = input("Select: ")
+            
+            if r_choice in ['1', '2']:
+                dry = (r_choice == '1')
+                engine = RemediationEngine(logger, session_log_dir, admin_status, current_user)
+                if platform_info['os'] == 'linux':
+                    rem = FlushDNSLinux(platform_info, logger)
+                else:
+                    rem = FlushDNSWindows(platform_info, logger)
+                
+                engine.run_remediation(rem, dry_run=dry)
+                input("\nPress Enter to continue...")
+
         elif choice == '0':
             print("Exiting...")
             break
