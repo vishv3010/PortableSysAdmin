@@ -125,13 +125,33 @@ def main():
                 print("No diagnostics found in this session. Run options 1 or 2 first.")
             else:
                 analysis = analyzer.analyze_diagnostics(diagnostics)
-                print("\n=== AI ANALYSIS RESULT ===")
+                print("
+=== AI ANALYSIS RESULT ===")
                 print(json.dumps(analysis, indent=2))
                 
-                with open(os.path.join(session_log_dir, 'actions.json'), 'a') as f:
-                    # Just logging that we ran the AI
-                    logger.info("AI Analysis completed.")
+                rec_id = analysis.get("recommended_action_id")
+                if rec_id:
+                    print(f"
+AI recommends applying: {rec_id}")
+                    ans = input("Would you like to hand this to the Remediation Engine? [y/N]: ")
+                    if ans.lower() == 'y':
+                        engine = RemediationEngine(logger, session_log_dir, admin_status, current_user)
+                        
+                        # In a full system, we would lookup the class by ID. Hardcoding the map for the prototype:
+                        remediation_map = {
+                            "LIN-DNS-FLUSH-001": FlushDNSLinux,
+                            "WIN-DNS-FLUSH-001": FlushDNSWindows
+                        }
+                        
+                        RemClass = remediation_map.get(rec_id)
+                        if RemClass:
+                            rem = RemClass(platform_info, logger)
+                            engine.run_remediation(rem, dry_run=False)
+                        else:
+                            print(f"[ERROR] Remediation ID {rec_id} not found in library.")
             
+            input("
+Press Enter to continue...")
             input("\nPress Enter to continue...")
 
         elif choice == '0':
