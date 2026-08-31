@@ -8,6 +8,8 @@ from privilege import is_admin, get_current_user
 from diagnostics.system import SystemDiagnostic
 from diagnostics.network import NetworkDiagnostic
 from reports.html_report import ReportGenerator
+from ai.backend import AIAnalyzer
+import os
 from remediation.engine import RemediationEngine
 from remediation.linux.network import FlushDNSLinux
 from remediation.windows.network import FlushDNSWindows
@@ -42,6 +44,7 @@ def main():
         print("2. Network Diagnostic")
         print("3. Remediation Menu")
         print("4. Generate Report")
+        print("5. Run AI Analysis")
         print("0. Exit")
         print("----------------------------------------------------")
         
@@ -101,6 +104,33 @@ def main():
                 webbrowser.open(f"file://{out_file}")
             except:
                 pass
+            
+            input("\nPress Enter to continue...")
+
+
+        elif choice == '5':
+            print("\n[INFO] Contacting Local AI Assistant...")
+            analyzer = AIAnalyzer(project_root, logger)
+            
+            # Read current diagnostics
+            diag_path = os.path.join(session_log_dir, "diagnostics.json")
+            diagnostics = []
+            if os.path.exists(diag_path):
+                with open(diag_path, 'r') as f:
+                    for line in f:
+                        if line.strip():
+                            diagnostics.append(json.loads(line))
+            
+            if not diagnostics:
+                print("No diagnostics found in this session. Run options 1 or 2 first.")
+            else:
+                analysis = analyzer.analyze_diagnostics(diagnostics)
+                print("\n=== AI ANALYSIS RESULT ===")
+                print(json.dumps(analysis, indent=2))
+                
+                with open(os.path.join(session_log_dir, 'actions.json'), 'a') as f:
+                    # Just logging that we ran the AI
+                    logger.info("AI Analysis completed.")
             
             input("\nPress Enter to continue...")
 
