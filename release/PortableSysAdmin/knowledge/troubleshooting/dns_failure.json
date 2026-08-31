@@ -1,0 +1,19 @@
+{
+  "problem": "DNS Resolution Failure",
+  "symptoms": [
+    "Cannot browse websites by name",
+    "Ping returns 'Temporary failure in name resolution'",
+    "nslookup times out"
+  ],
+  "common_causes": [
+    "Local DNS cache is corrupted",
+    "Configured DNS server is unreachable (down or blocked by firewall)",
+    "No DNS server provided by DHCP"
+  ],
+  "troubleshooting_steps": [
+    "1. Ping 8.8.8.8 to verify internet connectivity exists.",
+    "2. Check currently configured DNS servers (ipconfig /all OR resolvectl status).",
+    "3. Attempt to flush the local DNS cache.",
+    "4. Test resolution against a known good server explicitly (nslookup google.com 8.8.8.8)."
+  ]
+}

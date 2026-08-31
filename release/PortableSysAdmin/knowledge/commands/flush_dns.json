@@ -1,0 +1,15 @@
+{
+  "command_id": "flush_dns",
+  "windows": {
+    "syntax": "ipconfig /flushdns",
+    "explanation": "Clears the DNS Resolver cache on Windows.",
+    "risk": "Low",
+    "requires_admin": true
+  },
+  "linux": {
+    "syntax": "resolvectl flush-caches",
+    "explanation": "Flushes the systemd-resolved DNS cache on Linux.",
+    "risk": "Low",
+    "requires_admin": true
+  }
+}

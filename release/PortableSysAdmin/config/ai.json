@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "backend": "llama.cpp",
+  "model_path": "models/model.gguf",
+  "api_url": "http://127.0.0.1:8080/v1/chat/completions",
+  "system_prompt": "You are a SysAdmin Diagnostic Analyst. Analyze the provided JSON diagnostics. Output strictly JSON with keys: diagnosis, confidence, recommended_action_id, reason, risk."
+}
