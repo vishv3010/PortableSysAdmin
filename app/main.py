@@ -7,6 +7,7 @@ from platform_detect import get_platform_info
 from privilege import is_admin, get_current_user
 from diagnostics.system import SystemDiagnostic
 from diagnostics.network import NetworkDiagnostic
+from reports.html_report import ReportGenerator
 from remediation.engine import RemediationEngine
 from remediation.linux.network import FlushDNSLinux
 from remediation.windows.network import FlushDNSWindows
@@ -40,6 +41,7 @@ def main():
         print("1. Quick System Diagnostic")
         print("2. Network Diagnostic")
         print("3. Remediation Menu")
+        print("4. Generate Report")
         print("0. Exit")
         print("----------------------------------------------------")
         
@@ -85,6 +87,22 @@ def main():
                 
                 engine.run_remediation(rem, dry_run=dry)
                 input("\nPress Enter to continue...")
+
+
+        elif choice == '4':
+            print("\n[INFO] Generating HTML Report...")
+            generator = ReportGenerator(session_log_dir, project_root, platform_info)
+            out_file = generator.generate()
+            print(f"[SUCCESS] Report generated: {out_file}")
+            
+            # Try to open it in a browser if possible
+            import webbrowser
+            try:
+                webbrowser.open(f"file://{out_file}")
+            except:
+                pass
+            
+            input("\nPress Enter to continue...")
 
         elif choice == '0':
             print("Exiting...")
