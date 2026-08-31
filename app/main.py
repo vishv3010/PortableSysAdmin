@@ -54,7 +54,7 @@ def main():
             print(result.to_json())
             
             with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a') as f:
-                f.write(result.to_json() + "\n")
+                f.write(json.dumps(result.to_dict()) + "\n")
                 
             input("\nPress Enter to continue...")
             
@@ -65,7 +65,7 @@ def main():
             print(result.to_json())
             
             with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a') as f:
-                f.write(result.to_json() + "\n")
+                f.write(json.dumps(result.to_dict()) + "\n")
                 
             input("\nPress Enter to continue...")
             
