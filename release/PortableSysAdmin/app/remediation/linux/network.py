@@ -19,7 +19,7 @@ class FlushDNSLinux(BaseRemediation):
             return True, "Would run: resolvectl flush-caches"
         
         try:
-            result = subprocess.run(["resolvectl", "flush-caches"], capture_output=True, text=True)
+            result = self.secure_run(["resolvectl", "flush-caches"], capture_output=True, text=True)
             if result.returncode == 0:
                 return True, "DNS cache flushed successfully."
             else:
@@ -32,7 +32,7 @@ class FlushDNSLinux(BaseRemediation):
     def verify(self):
         # Verification might be checking statistics
         try:
-            result = subprocess.run(["resolvectl", "statistics"], capture_output=True, text=True)
+            result = self.secure_run(["resolvectl", "statistics"], capture_output=True, text=True)
             if "Current Cache Size: 0" in result.stdout or result.returncode == 0:
                 return True, "Verification passed (service responded)."
             return False, "Verification failed."

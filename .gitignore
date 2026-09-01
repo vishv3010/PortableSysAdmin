@@ -1,4 +1,16 @@
+# Exclude heavy binaries and models to comply with GitHub 100MB limit
+models/
+bin/
+python_portable/
+python_portable_linux/
+tools/
+release/
+
+# Exclude generated logs
 logs/
+llama.log
+*.log
+
+# Exclude python cache
 __pycache__/
 *.pyc
-.env

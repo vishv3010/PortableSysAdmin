@@ -11,11 +11,10 @@ from reports.html_report import ReportGenerator
 from ai.backend import AIAnalyzer
 import os
 from remediation.engine import RemediationEngine
-from remediation.linux.network import FlushDNSLinux
-from remediation.windows.network import FlushDNSWindows
-
-def clear_screen(platform_os):
-    os.system('cls' if platform_os == 'windows' else 'clear')
+from remediation.engine import RemediationEngine
+from remediation.registry import RemediationRegistry
+from diagnostics.disk import DiskDiagnostic
+from ui import UI, Colors
 
 def main():
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,34 +29,49 @@ def main():
     current_user = get_current_user()
     
     while True:
-        clear_screen(platform_info['os'])
-        print("====================================================")
-        print("        PORTABLE SYSADMIN TOOLKIT")
-        print("====================================================")
-        print("System:")
-        print(f"  OS       : {platform_info['os']} ({platform_info['release']})")
-        print(f"  Hostname : {platform_info['hostname']}")
-        print(f"  User     : {current_user} (Admin: {admin_status})")
-        print(f"  Session  : {session_id}")
-        print("----------------------------------------------------")
-        print("1. Quick System Diagnostic")
-        print("2. Network Diagnostic")
-        print("3. Remediation Menu")
-        print("4. Generate Report")
-        print("5. Run AI Analysis")
-        print("0. Exit")
-        print("----------------------------------------------------")
+        UI.clear_screen(platform_info['os'])
+        UI.print_banner(platform_info, session_id, admin_status)
+        UI.print_menu()
         
-        choice = input("Select an option: ")
+        choice = UI.prompt("Select a module: ")
         
         if choice == '1':
-            print("\n[INFO] Running System Diagnostic...")
+            from diagnostics.history import DiagnosticHistory
+            history = DiagnosticHistory(session_log_dir)
+            
+            UI.info("Running System Diagnostic...")
             diag = SystemDiagnostic(platform_info, logger)
             result = diag.run()
             print(result.to_json())
-            
+            history.append_record(result)
             with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a') as f:
                 f.write(json.dumps(result.to_dict()) + "\n")
+                
+            UI.info("Running Disk Diagnostic...")
+            disk_diag = DiskDiagnostic(platform_info, logger)
+            disk_result = disk_diag.run()
+            print(disk_result.to_json())
+            history.append_record(disk_result)
+            with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a') as f:
+                f.write(json.dumps(disk_result.to_dict()) + "\n")
+                
+            UI.info("Running Process Diagnostic...")
+            from diagnostics.process import ProcessDiagnostic
+            proc_diag = ProcessDiagnostic(platform_info, logger)
+            proc_result = proc_diag.run()
+            print(proc_result.to_json())
+            history.append_record(proc_result)
+            with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a') as f:
+                f.write(json.dumps(proc_result.to_dict()) + "\n")
+
+            UI.info("Running Security Diagnostic...")
+            from diagnostics.security import SecurityDiagnostic
+            sec_diag = SecurityDiagnostic(platform_info, logger)
+            sec_result = sec_diag.run()
+            print(sec_result.to_json())
+            history.append_record(sec_result)
+            with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a') as f:
+                f.write(json.dumps(sec_result.to_dict()) + "\n")
                 
             input("\nPress Enter to continue...")
             
@@ -74,22 +88,46 @@ def main():
             
 
         elif choice == '3':
-            print("\n[REMEDIATION MENU]")
-            print("1. Flush DNS Cache (Dry Run)")
-            print("2. Flush DNS Cache (Execute)")
-            print("0. Back")
-            r_choice = input("Select: ")
+            registry = RemediationRegistry()
+            available = registry.get_all_classes()
             
-            if r_choice in ['1', '2']:
-                dry = (r_choice == '1')
-                engine = RemediationEngine(logger, session_log_dir, admin_status, current_user)
-                if platform_info['os'] == 'linux':
-                    rem = FlushDNSLinux(platform_info, logger)
-                else:
-                    rem = FlushDNSWindows(platform_info, logger)
-                
-                engine.run_remediation(rem, dry_run=dry)
+            # Filter by platform
+            platform_actions = []
+            for action_id, cls in available.items():
+                # We instantiate briefly with None logger to read metadata
+                temp = cls(platform_info, None)
+                if temp.metadata['platform'] == platform_info['os']:
+                    platform_actions.append(temp)
+            
+            print("\n[REMEDIATION MENU]")
+            if not platform_actions:
+                print("No remediation actions available for this platform.")
                 input("\nPress Enter to continue...")
+                continue
+                
+            for idx, action in enumerate(platform_actions):
+                print(f"{idx+1}. {action.metadata['name']} (ID: {action.metadata['id']})")
+            print("0. Back")
+            
+            r_choice = input("Select an action to run: ")
+            
+            if r_choice.isdigit() and 1 <= int(r_choice) <= len(platform_actions):
+                selected_action_cls = available[platform_actions[int(r_choice)-1].metadata['id']]
+                # Instantiate properly with logger
+                selected_action = selected_action_cls(platform_info, logger)
+                
+                print(f"\nSelected: {selected_action.metadata['name']}")
+                print("1. Dry Run")
+                print("2. Execute")
+                print("0. Cancel")
+                exec_choice = input("Select mode: ")
+                
+                if exec_choice in ['1', '2']:
+                    dry = (exec_choice == '1')
+                    engine = RemediationEngine(logger, session_log_dir, admin_status, current_user)
+                    engine.run_remediation(selected_action, dry_run=dry)
+                
+            input("\nPress Enter to continue...")
 
 
         elif choice == '4':
@@ -109,50 +147,54 @@ def main():
 
 
         elif choice == '5':
-            print("\n[INFO] Contacting Local AI Assistant...")
+            UI.info("Initializing Offline AI Brain...")
             analyzer = AIAnalyzer(project_root, logger)
-            
-            # Read current diagnostics
-            diag_path = os.path.join(session_log_dir, "diagnostics.json")
-            diagnostics = []
-            if os.path.exists(diag_path):
-                with open(diag_path, 'r') as f:
-                    for line in f:
-                        if line.strip():
-                            diagnostics.append(json.loads(line))
-            
-            if not diagnostics:
-                print("No diagnostics found in this session. Run options 1 or 2 first.")
-            else:
-                analysis = analyzer.analyze_diagnostics(diagnostics)
-                print("
-=== AI ANALYSIS RESULT ===")
-                print(json.dumps(analysis, indent=2))
+            if not analyzer.is_enabled():
+                UI.error("AI Analysis is disabled in config.")
+                input("\nPress Enter to continue...")
+                continue
                 
-                rec_id = analysis.get("recommended_action_id")
-                if rec_id:
-                    print(f"
-AI recommends applying: {rec_id}")
-                    ans = input("Would you like to hand this to the Remediation Engine? [y/N]: ")
-                    if ans.lower() == 'y':
-                        engine = RemediationEngine(logger, session_log_dir, admin_status, current_user)
+            diag_path = os.path.join(session_log_dir, 'diagnostics.json')
+            if not os.path.exists(diag_path):
+                UI.warning("No diagnostics found. Please run Option 1 or 2 first.")
+                input("\nPress Enter to continue...")
+                continue
+                
+            diagnostics = []
+            with open(diag_path, 'r') as f:
+                for line in f:
+                    if line.strip():
+                        diagnostics.append(json.loads(line))
                         
-                        # In a full system, we would lookup the class by ID. Hardcoding the map for the prototype:
-                        remediation_map = {
-                            "LIN-DNS-FLUSH-001": FlushDNSLinux,
-                            "WIN-DNS-FLUSH-001": FlushDNSWindows
-                        }
-                        
-                        RemClass = remediation_map.get(rec_id)
-                        if RemClass:
-                            rem = RemClass(platform_info, logger)
-                            engine.run_remediation(rem, dry_run=False)
-                        else:
-                            print(f"[ERROR] Remediation ID {rec_id} not found in library.")
+            UI.info("AI is analyzing diagnostics. Please wait...")
+            result = analyzer.analyze_diagnostics(diagnostics)
             
-            input("
-Press Enter to continue...")
-            input("\nPress Enter to continue...")
+            print(f"\n{Colors.HEADER}=== AI DIAGNOSIS ==={Colors.ENDC}")
+            print(f"Diagnosis: {result.get('diagnosis')}")
+            print(f"Confidence: {result.get('confidence')}")
+            print(f"Reason: {result.get('reason')}")
+            print(f"Recommended Fix: {result.get('recommended_action_id')}")
+            print(f"{Colors.HEADER}===================={Colors.ENDC}\n")
+            
+            # --- INTERACTIVE CHAT MODE ---
+            UI.success("Interactive Chat Mode Enabled. Type 'exit' to return to menu.")
+            
+            # Seed the conversation history with the initial context so the AI remembers the logs
+            conversation_history = [
+                {"role": "system", "content": "You are a helpful IT SysAdmin Assistant. You have just analyzed the user's system diagnostics. Answer their follow-up questions clearly and concisely."},
+                {"role": "assistant", "content": f"My initial diagnosis was: {result.get('diagnosis')}. The recommended fix is {result.get('recommended_action_id')}. How can I help you further?"}
+            ]
+            
+            while True:
+                user_input = UI.prompt("\nYou: ")
+                if user_input.lower() in ['exit', 'quit', '0', 'back']:
+                    break
+                    
+                print(f"{Colors.CYAN}AI is thinking...{Colors.ENDC}")
+                ai_response, conversation_history = analyzer.chat(user_input, conversation_history)
+                print(f"\n{Colors.HEADER}AI:{Colors.ENDC} {ai_response}")
+                
+            input("\nPress Enter to return to main menu...")
 
         elif choice == '0':
             print("Exiting...")

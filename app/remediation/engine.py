@@ -27,46 +27,81 @@ class RemediationEngine:
         self.logger.info(f"AUDIT: {record}")
 
     def run_remediation(self, remediation, dry_run: bool = False, force_auto: bool = False):
+        from ui import UI
+        
         meta = remediation.metadata
-        print(f"\n--- PROPOSED ACTION: {meta['name']} ---")
-        print(f"Description: {meta['description']}")
-        print(f"Risk Level: {meta['risk']}")
+        UI.info(f"PROPOSED ACTION: {meta['name']}")
+        print(f"  Description: {meta['description']}")
+        print(f"  Risk Level:  {meta['risk']}")
         
         if meta['requires_admin'] and not self.is_admin:
-            print("[ERROR] Administrator/Root privileges required for this action. Aborting.")
+            UI.error("Administrator/Root privileges required for this action. Aborting.")
             self._log_audit(meta['id'], meta['name'], meta['risk'], dry_run, False, "Privilege check failed.")
             return False
 
         if RemediationPolicy.is_blocked(meta['risk']):
-            print("[ERROR] This action is classified as DANGEROUS and is blocked by policy.")
+            UI.error("This action is classified as DANGEROUS and is blocked by policy.")
             self._log_audit(meta['id'], meta['name'], meta['risk'], dry_run, False, "Blocked by policy.")
             return False
 
+        # --- PRE-FLIGHT CHECKS ---
+        UI.info("Running pre-flight checks...")
+        pre_success, pre_msg = remediation.pre_flight()
+        if not pre_success:
+            UI.error(f"Pre-flight failed: {pre_msg}")
+            self._log_audit(meta['id'], meta['name'], meta['risk'], dry_run, False, f"Pre-flight failed: {pre_msg}")
+            return False
+        else:
+            print(f"  {pre_msg}")
+
+        # --- DRY RUN MODE ---
         if dry_run:
-            print("\n[DRY RUN MODE] The following action WOULD be performed.")
+            UI.info("[DRY RUN MODE] The following action WOULD be performed:")
             success, msg = remediation.execute(dry_run=True)
-            print(f"Dry Run Result: {msg}")
+            print(f"  Result: {msg}")
             self._log_audit(meta['id'], meta['name'], meta['risk'], dry_run, success, msg)
             return True
 
+        # --- CONFIRMATION ---
         if RemediationPolicy.requires_confirmation(meta['risk']) and not force_auto:
-            confirm = input("This action requires confirmation. Execute? [y/N]: ")
+            confirm = UI.prompt("This action requires confirmation. Execute? [y/N]:")
             if confirm.lower() != 'y':
-                print("Action cancelled by user.")
+                UI.warning("Action cancelled by user.")
                 self._log_audit(meta['id'], meta['name'], meta['risk'], dry_run, False, "User cancelled.")
                 return False
 
-        print("\n[INFO] Executing...")
+        # --- EXECUTION ---
+        UI.info("Executing remediation...")
         success, msg = remediation.execute(dry_run=False)
-        print(f"Execution Output: {msg}")
         
         if success:
-            print("[INFO] Verifying...")
+            UI.success(f"Execution Output: {msg}")
+            UI.info("Verifying fix...")
             ver_success, ver_msg = remediation.verify()
-            print(f"Verification Output: {ver_msg}")
-            final_success = ver_success
-            final_msg = f"{msg} | Verification: {ver_msg}"
+            
+            if ver_success:
+                UI.success(f"Verification Output: {ver_msg}")
+                final_success = True
+                final_msg = f"{msg} | Verification: {ver_msg}"
+            else:
+                UI.error(f"Verification Failed: {ver_msg}")
+                final_success = False
+                final_msg = f"{msg} | Verification Failed: {ver_msg}"
+                
+                # --- ROLLBACK ORCHESTRATION ---
+                if meta.get('rollback_available', False):
+                    UI.warning("Automated rollback initiated due to verification failure...")
+                    rb_success, rb_msg = remediation.rollback()
+                    if rb_success:
+                        UI.success(f"Rollback successful: {rb_msg}")
+                        final_msg += f" | Rollback: {rb_msg}"
+                    else:
+                        UI.error(f"Rollback failed: {rb_msg}")
+                        final_msg += f" | Rollback Failed: {rb_msg}"
+                else:
+                    UI.warning("No automated rollback available for this action. Manual intervention may be required.")
         else:
+            UI.error(f"Execution Failed: {msg}")
             final_success = False
             final_msg = msg
 

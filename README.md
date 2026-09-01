@@ -12,8 +12,12 @@ This toolkit is designed to be run from a portable USB drive (or locally during 
 - **AI**: (Planned for later phases) A local, offline GGUF model that analyzes JSON diagnostic data to recommend actions without arbitrary command execution.
 
 ## Requirements
-- Python 3.8+ (Linux/Mac) or bundled portable Python (Windows)
+- Python 3.8+
 - Works offline by default
+
+**Supported Platforms (Optimized For):**
+- **Linux:** Ubuntu (uses `apt-get` and `systemd-resolved`)
+- **Windows:** Windows 10 Pro (uses native Windows CLI utilities)
 
 ## Usage
 Run the appropriate launcher for your system:
