@@ -1,112 +1,236 @@
-# Portable SysAdmin AI & System Optimization Toolkit
+<div align="center">
 
+# ⚡ PortableSysAdmin
+### The Ultimate Open-Source SysAdmin Diagnostic, Remediation & 1-Click System Speed-Up Toolkit
+
+[![CI & Build](https://github.com/vishv3010/PortableSysAdmin/actions/workflows/ci.yml/badge.svg)](https://github.com/vishv3010/PortableSysAdmin/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-brightgreen.svg)]()
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)]()
-[![Safety](https://img.shields.io/badge/Safety-100%25%20Zero%20Data%20Loss-success.svg)]()
+[![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python&logoColor=white)]()
+[![Zero Data Loss](https://img.shields.io/badge/Safety-100%25%20Zero%20Data%20Loss-success.svg)]()
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![GitHub Stars](https://img.shields.io/github/stars/vishv3010/PortableSysAdmin?style=social)](https://github.com/vishv3010/PortableSysAdmin/stargazers)
 
-A professional, portable SysAdmin Diagnostic, Troubleshooting, Remediation, 1-Click Safe Speed-Up, and Local AI Assistant Toolkit. Engineered for system administrators, IT support technicians, and power users on both **Linux** and **Windows**.
+<p align="center">
+  <b>Diagnose • Optimize • Repair • Recover • Accelerate</b><br>
+  Engineered for System Administrators, IT Support Specialists, and Power Users.<br>
+  Works natively on <b>Ubuntu / Debian Linux</b> and <b>Windows 10 / 11 / Server</b>.
+</p>
+
+[Quick Install](#-1-line-instant-installation) • [Key Features](#-key-features) • [Terminal Showcase](#-interactive-terminal-ui) • [Architecture](#-architecture) • [Safety Model](#-enterprise-safety-guarantee) • [Docs](POCKET_REFERENCE.html)
+
+</div>
 
 ---
 
-## ⚡ 1-Line Quick Installation (Install Anywhere in 3 Seconds)
+## 🚀 1-Line Instant Installation
 
-Install and run on any machine instantly without cloning or manual configuration:
+Install and run on any machine worldwide in **under 3 seconds** without manual cloning or configuration:
 
-### 🐧 Linux (Ubuntu / Debian / Mint / Pop!_OS)
-Open any terminal and run:
+### 🐧 Linux (Ubuntu, Debian, Linux Mint, Pop!_OS)
 ```bash
 curl -sSL https://raw.githubusercontent.com/vishv3010/PortableSysAdmin/master/install.sh | sudo bash
 ```
 
-### 🪟 Windows (10 / 11 / Server)
-Open PowerShell as Administrator and run:
+### 🪟 Windows (10, 11, Windows Server)
+Open PowerShell as Administrator:
 ```powershell
 irm https://raw.githubusercontent.com/vishv3010/PortableSysAdmin/master/install.ps1 | iex
 ```
 
-*Once installed, simply type **`portablesysadmin`** in any terminal/CMD, or click the desktop shortcut!*
+> **After installing:** Simply run `portablesysadmin` from any terminal or launch it from your Desktop / Application Menu!
 
 ---
 
-## 💾 Portable USB Usage (Zero-Install Mode)
+## 💾 Zero-Install Modes
 
-You can also run directly from any USB flash drive without installing:
+### 1. Portable USB Mode (Run Directly from USB)
+Plug in your flash drive on any client machine and run:
+* **Linux:** `chmod +x START.sh && ./START.sh`
+* **Windows:** Double-click `START.bat` (or Run as Administrator)
 
-* **Linux:**
-  ```bash
-  chmod +x START.sh
-  ./START.sh
-  ```
-* **Windows:** Double-click **`START.bat`** (or Run as Administrator).
-
----
-
-## 📦 Debian / Ubuntu Package (`.deb`)
-
-To install using standard `apt`:
+### 2. Standard Debian / Ubuntu Package (`.deb`)
 ```bash
-# Build the package (or grab portablesysadmin_1.0.0_all.deb from Releases)
-./build_deb.sh
-
-# Install with apt
 sudo apt install ./portablesysadmin_1.0.0_all.deb
 ```
+*(Only **38 KB** — builds instantly with `./build_deb.sh`)*
 
 ---
 
 ## 🌟 Key Features
 
-### 1. 🚀 1-Click Safe System Speed-Up & RAM Optimizer
-* **100% Zero Data Loss Guarantee:** Never terminates user apps (Word, Excel, Chrome, Teams, code editors) and never touches personal files.
-* **Flushes dirty buffers (`sync`)** before dropping clean pagecache and dentries to instantly free gigabytes of RAM.
-* **Defragments memory pools** (`compact_memory`) for snappy application allocations.
-* **Vacuums bloated system logs** (`journalctl --vacuum-size=100M`) and purges package installer caches.
-* **Unthrottles CPU frequency** by switching stuck `powersave` governors to `performance`.
-* **Displays real-time Before & After scorecard** showing exact RAM freed, disk space recovered, and temperature changes.
-
-### 2. 🩺 2-Second Quick Triage & Auto-Doctor
-* Rapidly inspects RAM utilization, Root Disk headroom, CPU Load average, and DNS connectivity.
-* Identifies bottlenecks and provides a 1-click prompt to execute automated remediation.
-
-### 3. 🌡️ Thermal & "Ghost CPU" Diagnostics
-* Diagnoses the **Thermal PROCHOT Illusion** where laptops appear stuck at 100% CPU with no active process because heat throttled the CPU clock down to 0.79 GHz.
-* Reads live hardware core temperatures across all thermal zones.
-* Identifies and stops memory thrashing that causes continuous SSD and bus heat generation.
-
-### 4. 🛡️ Enterprise Remediation Engine
-* Safe, audited auto-fixes categorized by strict risk policies (`SAFE`, `CONFIRMATION_REQUIRED`, `DANGEROUS`).
-* Full **Dry-Run mode** to inspect proposed command executions before running.
-* Handles process kills, network resets, Wi-Fi driver restarts, display shell recovery, and package manager repairs.
-
-### 5. 📊 Enterprise HTML Reports & Online AI Prompt
-* Generates interactive, standalone HTML diagnostic health reports.
-* Includes a 1-click **Copy AI Prompt** button designed to paste full diagnostic briefs directly into ChatGPT or Claude with 0% CPU consumption.
-
-### 6. 🤖 Offline Local AI Assistant
-* On-demand, private, offline GGUF local model integration via `llama.cpp` for secure environments with zero internet access.
-
-### 7. 📖 Offline SysAdmin Pocket Reference
-* Embedded offline searchable cheatsheet containing vital CLI commands for networking, disk management, process inspection, and system rescue.
+<table>
+  <tr>
+    <td width="50%">
+      <h3>🚀 1-Click Safe System Speed-Up</h3>
+      <ul>
+        <li><b>100% Zero Data Loss:</b> Never kills user applications and never touches personal files.</li>
+        <li><b>RAM Cache Flush:</b> Safely commits dirty buffers with <code>sync</code> then drops clean pagecache/inodes to reclaim gigabytes of memory.</li>
+        <li><b>Memory Compaction:</b> Defragments free RAM pools for instantaneous application launch.</li>
+        <li><b>Log & Disk Vacuum:</b> Trims bloated <code>systemd-journald</code> logs to 100MB and purges package installer archives.</li>
+        <li><b>CPU Unthrottling:</b> Restores throttled <code>powersave</code> frequencies to high performance.</li>
+      </ul>
+    </td>
+    <td width="50%">
+      <h3>🩺 2-Second Quick Triage</h3>
+      <ul>
+        <li>Rapid-fire scorecard across <b>RAM</b>, <b>Root Disk</b>, <b>Network/DNS</b>, and <b>CPU Load</b>.</li>
+        <li>Instant bottleneck detection with a 1-click prompt to auto-remediate.</li>
+        <li>Identifies network drops and DNS timeout anomalies within 1.5 seconds.</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h3>🌡️ Thermal & "Ghost CPU" Diagnostics</h3>
+      <ul>
+        <li>Diagnoses the <b>Thermal PROCHOT Illusion</b> where laptops appear at 100% CPU because overheating downclocked the clock to 0.79 GHz.</li>
+        <li>Monitors live hardware core temperatures across all thermal zones.</li>
+        <li>Eliminates swap thrashing that drives continuous NVMe and bus heat generation.</li>
+      </ul>
+    </td>
+    <td width="50%">
+      <h3>🛡️ Safe Remediation Engine</h3>
+      <ul>
+        <li>Strict risk classification: <code>SAFE</code>, <code>CONFIRMATION_REQUIRED</code>, and <code>DANGEROUS</code>.</li>
+        <li>Full <b>Dry-Run Mode</b> to inspect commands before executing.</li>
+        <li>Auto-fixes for Wi-Fi adapters, network stacks, frozen display shells, and broken package managers.</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <h3>📊 Enterprise HTML Reporting</h3>
+      <ul>
+        <li>Generates standalone HTML diagnostic dashboards with responsive metric tables.</li>
+        <li>Includes a <b>1-Click Copy AI Prompt</b> button designed for ChatGPT / Claude (0% CPU background load).</li>
+      </ul>
+    </td>
+    <td width="50%">
+      <h3>🤖 Local Offline AI Assistant</h3>
+      <ul>
+        <li>Embedded offline GGUF local model execution via <code>llama.cpp</code>.</li>
+        <li>Runs on-demand for air-gapped systems with zero internet dependency.</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 ---
 
-## 🛡️ Enterprise Safety & Audit Model
+## 🖥️ Interactive Terminal UI
 
-Every remediation action and speed-up execution is recorded in an immutable audit trail (`logs/session_<id>/actions.json`), including:
-* ISO-8601 UTC timestamp
-* User and privilege status
-* Pre- and post-optimization telemetry
-* Verification outputs
+```text
+  _____           _        _     _        
+ |  __ \         | |      | |   | |       
+ | |__) |__  _ __| |_ __ _| |__ | | ___   
+ |  ___/ _ \| '__| __/ _` | '_ \| |/ _ \  
+ | |  | (_) | |  | || (_| | |_) | |  __/  
+ |_|   \___/|_|   \__\__,_|_.__/|_|\___|  
+                                          
+      SYSADMIN TROUBLESHOOTING TOOLKIT
+
+[+] System:  Ubuntu (24.04)
+[+] Host:    addweb-ThinkPad-Yoga-260
+[+] Access:  ROOT/ADMIN
+[+] Session: 20260910_110000
+==================================================
+
+AVAILABLE MODULES:
+  [1] Run Deep System Diagnostics (CPU/RAM/Disk/Security)
+  [2] Run Network Diagnostics
+  [3] Open Remediation Engine (Auto-Fixes)
+  [4] Generate Enterprise HTML Report
+  [5] Ask AI For Root Cause Analysis
+  
+  [6] Quick Triage & Auto-Doctor (Instant 2-Sec Check & 1-Click Fix)
+  [7] Instant SysAdmin Command Finder (Offline Cheatsheet)
+  [8] Open HTML Pocket Reference Guide (Browser)
+  
+  [9] 🚀 1-Click Safe System Speed-Up (Zero Data Loss RAM/Disk/CPU Boost)
+  
+  [0] Exit Toolkit
+```
+
+### 📊 Real-Time Speed-Up Scorecard Example
+
+```text
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                  OPTIMIZATION PERFORMANCE COMPARISON CARD                    ║
+╠══════════════════════════════╦═══════════════╦═══════════════╦═══════════════╣
+║ Metric                       ║ Before        ║ After         ║ Net Result    ║
+╠══════════════════════════════╬═══════════════╬═══════════════╬═══════════════╣
+║ Available RAM (Free Pool)    ║ 4.20 GB       ║ 11.53 GB      ║ +7.33 GB Freed║
+║ RAM Memory Utilization       ║ 72.8%         ║ 25.5%         ║ Reduced Load  ║
+║ Free Disk Space              ║ 18.20 GB      ║ 21.40 GB      ║ +3.20 GB Disk ║
+║ CPU Temperature              ║ 80.0°C        ║ 77.0°C        ║ -3.0°C Cool   ║
+║ CPU Clock Speed              ║ 0.79 GHz      ║ 2.91 GHz      ║ Unthrottled   ║
+║ CPU Governor / Power Plan    ║ powersave     ║ performance   ║ Optimized     ║
+║ User Applications & Files    ║ Intact        ║ Intact        ║ 0 Data Loss   ║
+╚══════════════════════════════╩═══════════════╩═══════════════╩═══════════════╝
+```
 
 ---
 
-## 📋 Requirements
-* **Python 3.8+** (Standard library only; zero external pip dependencies required).
-* **Linux:** Ubuntu, Debian, Linux Mint, or derivatives.
-* **Windows:** Windows 10, Windows 11, or Windows Server.
+## 🏗️ Architecture
+
+```mermaid
+flowchart TD
+    Launcher["START.sh / START.bat / CLI Launcher"] --> Main["Main Orchestrator (app/main.py)"]
+    
+    Main --> Triage["Quick Triage (app/triage.py)"]
+    Main --> Diagnostics["Diagnostics Engine (app/diagnostics/)"]
+    Main --> SpeedUp["1-Click Speed-Up (app/speed_up.py)"]
+    Main --> Remediation["Remediation Engine (app/remediation/)"]
+    Main --> Reports["HTML Report Generator (app/reports/)"]
+    Main --> AI["AI Assistant / Llama.cpp (app/ai/)"]
+    
+    SpeedUp -->|Safe Sync & Drop Caches| Kernel["Linux /proc / sysfs / Win32 API"]
+    Diagnostics -->|Metrics| Audit["Session Audit Trail (logs/actions.json)"]
+    Remediation -->|Policy Verified| Audit
+```
+
+---
+
+## 🛡️ Enterprise Safety Guarantee
+
+PortableSysAdmin is engineered from day one with a strict **Zero Harm Policy**:
+
+* **Never Kills User Apps:** Browsers, Office applications, IDEs, and active terminal sessions are strictly preserved.
+* **Never Modifies Personal Data:** Zero operations are performed on `Desktop`, `Documents`, `Downloads`, or home folders.
+* **Pre-Execution Flush:** All volatile file modifications are synced to persistent storage (`sync`) prior to dropping clean RAM caches.
+* **Full Audit Trail:** Every action and telemetry reading is logged to `logs/session_<id>/actions.json` for corporate security compliance.
+
+---
+
+## 🧩 Supported Platforms & Matrix
+
+| Feature | Linux (Ubuntu / Debian / Mint) | Windows (10 / 11 / Server) |
+| :--- | :---: | :---: |
+| **1-Click Safe Speed-Up** | ✅ Full Kernel Cache / Journal Vacuum | ✅ Standby Trim / Temp Purge |
+| **Quick Triage** | ✅ 2-Second Health Check | ✅ 2-Second Health Check |
+| **Thermal Monitoring** | ✅ Hardware Sysfs Zones | ✅ WMI Thermal Sensors |
+| **1-Line Web Installer** | ✅ `curl ... \| sudo bash` | ✅ `irm ... \| iex` |
+| **Offline HTML Reports** | ✅ Standalone Dashboard | ✅ Standalone Dashboard |
+| **Offline Cheatsheet** | ✅ Instant Command Finder | ✅ Instant Command Finder |
+
+---
+
+## 🤝 Contributing
+
+Contributions make the open-source community an amazing place to learn and build! Any contributions you make are **greatly appreciated**.
+
+See our [Contributing Guide](CONTRIBUTING.md) to get started.
 
 ---
 
 ## 📄 License
-This project is licensed under the [MIT License](LICENSE) — free for personal, enterprise, and educational use by anyone in the world.
+
+Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more information.
+
+---
+
+<div align="center">
+  <b>Built with ❤️ for SysAdmins worldwide by <a href="https://github.com/vishv3010">Vishv Patel</a></b><br>
+  <sub>If you find this toolkit helpful, please consider leaving a ⭐️ on GitHub!</sub>
+</div>

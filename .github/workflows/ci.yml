@@ -1,0 +1,90 @@
+name: CI & Build
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Syntax & Compilation Check
+        run: |
+          python3 -m py_compile app/*.py app/*/*.py app/*/*/*.py
+
+      - name: Run Core Module Tests
+        run: |
+          python3 -c '
+          import sys
+          sys.path.insert(0, "app")
+          from speed_up import SafeSystemSpeedUp
+          from platform_detect import get_platform_info
+          from remediation.registry import RemediationRegistry
+
+          platform_info = get_platform_info()
+          booster = SafeSystemSpeedUp(platform_info)
+          metrics = booster.get_metrics()
+          assert metrics["ram_total_gb"] > 0, "RAM metric failed"
+          assert metrics["disk_total_gb"] > 0, "Disk metric failed"
+
+          reg = RemediationRegistry()
+          classes = reg.get_all_classes()
+          assert "LIN-SYSTEM-BOOST-001" in classes, "Linux speed-up missing"
+          assert "WIN-SYSTEM-BOOST-001" in classes, "Windows speed-up missing"
+          print("All Linux smoke tests passed!")
+          '
+
+      - name: Build Debian Package
+        run: |
+          chmod +x build_deb.sh
+          ./build_deb.sh
+
+      - name: Upload Debian Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: portablesysadmin-deb
+          path: portablesysadmin_*.deb
+
+  test-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Syntax & Compilation Check
+        run: |
+          python -m py_compile app\*.py app\*\*.py app\*\*\*.py
+
+      - name: Run Windows Registry & Fallback Tests
+        run: |
+          python -c "
+          import sys
+          sys.path.insert(0, 'app')
+          from speed_up import SafeSystemSpeedUp
+          from remediation.windows.speed_up import SafeSystemBoostWindows
+
+          win_platform = {'os': 'windows', 'release': '10', 'architecture': 'x86_64', 'hostname': 'CI-RUNNER'}
+          booster = SafeSystemSpeedUp(win_platform)
+          metrics = booster.get_metrics()
+          assert metrics['ram_total_gb'] > 0, 'Windows RAM detection failed'
+
+          action = SafeSystemBoostWindows(win_platform, None)
+          res, msg = action.execute(dry_run=True)
+          assert res is True, 'Dry run failed'
+          print('All Windows smoke tests passed!')
+          "
