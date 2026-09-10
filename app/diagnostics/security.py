@@ -1,5 +1,7 @@
 import subprocess
+
 from .base import BaseDiagnostic, DiagnosticResult
+
 
 class SecurityDiagnostic(BaseDiagnostic):
     def run(self) -> DiagnosticResult:

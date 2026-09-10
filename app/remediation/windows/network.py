@@ -1,5 +1,6 @@
 from ..base import BaseRemediation
 
+
 class FlushDNSWindows(BaseRemediation):
     @property
     def metadata(self):

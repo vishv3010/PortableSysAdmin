@@ -1,5 +1,5 @@
-import subprocess
 from ..base import BaseRemediation
+
 
 class FlushDNSLinux(BaseRemediation):
     @property
@@ -36,5 +36,5 @@ class FlushDNSLinux(BaseRemediation):
             if "Current Cache Size: 0" in result.stdout or result.returncode == 0:
                 return True, "Verification passed (service responded)."
             return False, "Verification failed."
-        except:
+        except Exception:
             return False, "Verification check failed."

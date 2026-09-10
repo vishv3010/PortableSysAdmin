@@ -1,5 +1,6 @@
 import platform
 
+
 def get_platform_info():
     system = platform.system().lower()
     release = platform.release()

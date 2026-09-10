@@ -8,15 +8,8 @@ echo ====================================================
 set "PROJECT_ROOT=%~dp0"
 cd /d "%PROJECT_ROOT%"
 
-:: Start the AI Server in the background if it exists
-if exist "%PROJECT_ROOT%bin\llama-server.exe" (
-    echo [INFO] Booting offline AI Brain in the background (Optimized for CPU)...
-    start "Local AI Server" /B /MIN "%PROJECT_ROOT%bin\llama-server.exe" -m "%PROJECT_ROOT%models\model.gguf" --port 8080 -t 4 -c 2048 -b 512 >nul 2>&1
-    :: Wait 3 seconds for server to spin up
-    timeout /t 3 /nobreak >nul
-) else (
-    echo [WARNING] Local AI Server not found in bin\. AI analysis will fallback to mocked logic.
-)
+:: Offline AI Server will run on-demand only when requested (0% CPU at startup)
+echo [INFO] Offline AI ready on-demand (0% CPU background footprint at startup).
 
 :: Check for bundled Portable Python first
 set "PYTHON_EXE=python"

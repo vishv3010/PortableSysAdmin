@@ -2,9 +2,12 @@ import logging
 import os
 from datetime import datetime
 
+
 def setup_logger(project_root: str):
-    log_dir = os.path.join(project_root, "logs", datetime.now().strftime("%Y/%m/%d"))
-    session_id = datetime.now().strftime("session-%Y%m%d-%H%M%S")
+    from datetime import timezone
+    now = datetime.now(timezone.utc).astimezone()
+    log_dir = os.path.join(project_root, "logs", now.strftime("%Y/%m/%d"))
+    session_id = now.strftime("session-%Y%m%d-%H%M%S")
     session_log_dir = os.path.join(log_dir, session_id)
     
     os.makedirs(session_log_dir, exist_ok=True)

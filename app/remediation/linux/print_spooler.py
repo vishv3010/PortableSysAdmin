@@ -1,5 +1,5 @@
-import subprocess
 from ..base import BaseRemediation
+
 
 class RestartCups(BaseRemediation):
     @property
@@ -35,5 +35,5 @@ class RestartCups(BaseRemediation):
             if "active" in result.stdout:
                 return True, "CUPS is active."
             return False, "CUPS is not active."
-        except:
+        except Exception:
             return False, "Verification check failed."

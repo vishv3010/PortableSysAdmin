@@ -1,9 +1,10 @@
 import json
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Any
+
 
 class DiagnosticResult:
-    def __init__(self, category: str, test: str, status: str, severity: str, message: str, evidence: Dict[str, Any] = None, recommended_actions: list = None):
+    def __init__(self, category: str, test: str, status: str, severity: str, message: str, evidence: dict[str, Any] = None, recommended_actions: list = None):
         self.category = category
         self.test = test
         self.status = status # PASS, WARNING, FAIL, UNKNOWN, SKIPPED

@@ -1,7 +1,9 @@
-import os
 import json
+import os
 from datetime import datetime
+
 from .policy import RemediationPolicy
+
 
 class RemediationEngine:
     def __init__(self, logger, session_log_dir, is_admin, current_user):
@@ -12,8 +14,9 @@ class RemediationEngine:
         self.audit_log_path = os.path.join(session_log_dir, "actions.json")
 
     def _log_audit(self, action_id: str, action_name: str, risk: str, dry_run: bool, success: bool, message: str):
+        from datetime import timezone
         record = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).astimezone().isoformat(),
             "user": self.current_user,
             "action_id": action_id,
             "action_name": action_name,
@@ -24,7 +27,8 @@ class RemediationEngine:
         }
         with open(self.audit_log_path, 'a') as f:
             f.write(json.dumps(record) + "\n")
-        self.logger.info(f"AUDIT: {record}")
+        if self.logger:
+            self.logger.info(f"AUDIT: {record}")
 
     def run_remediation(self, remediation, dry_run: bool = False, force_auto: bool = False):
         from ui import UI

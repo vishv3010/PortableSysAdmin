@@ -1,14 +1,100 @@
+import html as html_lib
 import json
 import os
-import html as html_lib
 from datetime import datetime
+
 
 class ReportGenerator:
     def __init__(self, session_log_dir, project_root, platform_info):
         self.session_log_dir = session_log_dir
         self.project_root = project_root
         self.platform_info = platform_info
-        
+
+    def generate_ai_prompt(self, diagnostics, actions) -> str:
+        hostname = self.platform_info.get('hostname', 'Unknown')
+        os_info = self.platform_info.get('os', 'Unknown')
+        release = self.platform_info.get('release', 'Unknown')
+        arch = self.platform_info.get('arch', 'Unknown')
+        from datetime import timezone
+        gen_time = datetime.now(timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S')
+
+        failed = [d for d in diagnostics if d.get('status') == "FAIL"]
+        warnings = [d for d in diagnostics if d.get('status') == "WARNING"]
+        passed = [d for d in diagnostics if d.get('status') == "PASS"]
+
+        prompt = f"""# System Administration Diagnostic Brief
+You are an expert Senior Systems Administrator and IT Troubleshooting Specialist.
+I ran an automated system health diagnostic scan on this machine using the Portable SysAdmin Toolkit.
+Please analyze the diagnostics below, identify root causes, provide exact copy-pasteable terminal commands to fix each issue, and guide me through resolution.
+
+## 💻 Machine Profile
+- Hostname: {hostname}
+- Operating System: {os_info} ({release})
+- Architecture: {arch}
+- Scan Time: {gen_time}
+
+## 📊 Executive Summary
+- Total Checks: {len(diagnostics)}
+- Critical Failures: {len(failed)}
+- Warnings: {len(warnings)}
+- Passed Checks: {len(passed)}
+
+"""
+        if failed or warnings:
+            prompt += "## 🚨 Issues Requiring Remediation\n\n"
+            issue_num = 1
+            for d in failed:
+                cat = str(d.get('category', 'general')).upper()
+                test = str(d.get('test', 'unknown'))
+                msg = str(d.get('message', ''))
+                sev = str(d.get('severity', 'HIGH')).upper()
+                prompt += f"### Issue #{issue_num}: [FAIL - {sev}] {cat}: {test}\n"
+                prompt += f"- **Description**: {msg}\n"
+                evidence = d.get('evidence')
+                if evidence:
+                    prompt += f"- **Telemetry / Error Log**:\n```json\n{json.dumps(evidence, indent=2)}\n```\n\n"
+                else:
+                    prompt += "\n"
+                issue_num += 1
+
+            for d in warnings:
+                cat = str(d.get('category', 'general')).upper()
+                test = str(d.get('test', 'unknown'))
+                msg = str(d.get('message', ''))
+                sev = str(d.get('severity', 'MEDIUM')).upper()
+                prompt += f"### Issue #{issue_num}: [WARNING - {sev}] {cat}: {test}\n"
+                prompt += f"- **Description**: {msg}\n"
+                evidence = d.get('evidence')
+                if evidence:
+                    prompt += f"- **Telemetry / Error Log**:\n```json\n{json.dumps(evidence, indent=2)}\n```\n\n"
+                else:
+                    prompt += "\n"
+                issue_num += 1
+        else:
+            prompt += "## 🚨 Issues Requiring Remediation\nNo failures or warnings detected. All tests passed.\n\n"
+
+        if passed:
+            prompt += "## ✅ Verified Healthy Components\n"
+            for d in passed:
+                prompt += f"- [{d.get('category', 'general')}] {d.get('test')}: {d.get('message', 'OK')}\n"
+            prompt += "\n"
+
+        if actions:
+            prompt += "## 🛠️ Prior Remediation Actions Executed\n"
+            for a in actions:
+                st = "SUCCESS" if a.get('success') else "FAILED"
+                prompt += f"- {a.get('action_name')}: {st} - {a.get('message')}\n"
+            prompt += "\n"
+
+        prompt += f"""## 🎯 Instructions for the AI Assistant:
+Based strictly on this machine's operating system ({os_info}), please provide:
+1. **Root Cause Analysis**: For each failure/warning, explain what happened and why it occurred in plain English.
+2. **Step-by-Step Fix Commands**: Give the EXACT terminal/shell commands to fix the issues. Format them as copy-pasteable blocks with brief explanations.
+3. **Verification Command**: The specific command to run to confirm the issue is fixed.
+4. **Interactive Support**: I will run your instructions and reply with any terminal output or errors. Be ready to continue troubleshooting with me.
+"""
+        return prompt
+
     def generate(self) -> str:
         # Load diagnostics
         diag_path = os.path.join(self.session_log_dir, "diagnostics.json")
@@ -28,6 +114,16 @@ class ReportGenerator:
                     if line.strip():
                         actions.append(json.loads(line))
                         
+        # Generate and save Online AI Diagnostic Prompt
+        ai_prompt_text = self.generate_ai_prompt(diagnostics, actions)
+        prompt_out_file = os.path.join(self.session_log_dir, "ai_prompt.txt")
+        try:
+            with open(prompt_out_file, 'w') as f:
+                f.write(ai_prompt_text)
+        except Exception:
+            pass
+        escaped_ai_prompt = html_lib.escape(ai_prompt_text)
+
         # Determine overall status and counts
         total_tests = len(diagnostics)
         failed_count = sum(1 for d in diagnostics if d.get('status') == "FAIL")
@@ -43,7 +139,8 @@ class ReportGenerator:
         hostname = html_lib.escape(self.platform_info.get('hostname', 'Unknown'))
         os_info = html_lib.escape(self.platform_info.get('os', 'Unknown'))
         release = html_lib.escape(self.platform_info.get('release', 'Unknown'))
-        gen_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        from datetime import timezone
+        gen_time = datetime.now(timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M:%S')
 
         # Build HTML
         html = f"""<!DOCTYPE html>
@@ -104,11 +201,80 @@ class ReportGenerator:
         .finding-body {{ padding: 1rem; }}
         .evidence-block {{ background: #1e293b; color: #f8fafc; padding: 1rem; border-radius: 6px; overflow-x: auto; font-family: monospace; font-size: 0.875rem; margin-top: 1rem; }}
         details summary {{ cursor: pointer; font-weight: 600; color: var(--info); outline: none; }}
-        
+
+        /* AI Interactive Section */
+        .ai-section {{
+            background: linear-gradient(135deg, #1e1b4b 0%, #1e293b 100%);
+            border: 2px solid #4f46e5;
+            border-radius: 12px;
+            padding: 1.75rem;
+            margin-bottom: 2.5rem;
+            color: #f8fafc;
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.25);
+        }}
+        .ai-header {{ display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }}
+        .ai-icon {{ font-size: 2.2rem; }}
+        .ai-title {{ margin: 0; font-size: 1.35rem; color: #c7d2fe; font-weight: 700; }}
+        .ai-subtitle {{ margin: 0.25rem 0 0 0; color: #cbd5e1; font-size: 0.95rem; }}
+        .ai-actions {{ display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.25rem; align-items: center; }}
+        .btn {{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }}
+        .btn-copy {{
+            background-color: #4f46e5;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }}
+        .btn-copy:hover {{ background-color: #4338ca; transform: translateY(-1px); }}
+        .btn-link {{
+            background-color: #334155;
+            color: #f8fafc;
+            border: 1px solid #475569;
+        }}
+        .btn-link:hover {{ background-color: #475569; color: #ffffff; }}
+        .toast-msg {{
+            display: none;
+            margin-top: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            background-color: #064e3b;
+            color: #6ee7b7;
+            border: 1px solid #059669;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }}
+        .prompt-details {{ margin-top: 1.25rem; }}
+        .prompt-details summary {{ cursor: pointer; color: #a5b4fc; font-weight: 600; font-size: 0.9rem; outline: none; }}
+        .prompt-pre {{
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 1.25rem;
+            border-radius: 8px;
+            border: 1px solid #312e81;
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            max-height: 320px;
+            overflow-y: auto;
+            margin-top: 0.75rem;
+        }}
+
         @media print {{
             body {{ background-color: #fff; padding: 0; }}
             .card {{ box-shadow: none; }}
             .table-container {{ box-shadow: none; }}
+            .ai-section {{ display: none; }}
         }}
     </style>
 </head>
@@ -143,6 +309,37 @@ class ReportGenerator:
                 <div class="card-title">Issues Found</div>
                 <div class="card-value" style="color: var(--danger);">{failed_count + warning_count}</div>
             </div>
+        </div>
+
+        <!-- ONLINE AI ASSISTANT CARD -->
+        <div class="ai-section">
+            <div class="ai-header">
+                <div class="ai-icon">🤖</div>
+                <div>
+                    <h2 class="ai-title">Troubleshoot with Online AI (ChatGPT / Claude)</h2>
+                    <p class="ai-subtitle">
+                        Avoid 100% CPU usage on this laptop. One-click copy this entire diagnostic brief into ChatGPT or Claude to get root-cause analysis, exact fix commands, and interactive guidance.
+                    </p>
+                </div>
+            </div>
+            <div class="ai-actions">
+                <button id="copy-btn" class="btn btn-copy" onclick="copyAIPrompt()">
+                    📋 Copy Prompt for ChatGPT
+                </button>
+                <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer" class="btn btn-link">
+                    🚀 Open ChatGPT
+                </a>
+                <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" class="btn btn-link">
+                    🟣 Open Claude
+                </a>
+            </div>
+            <div id="toast-msg" class="toast-msg">
+                ✅ Diagnostic prompt copied to clipboard! Paste it into ChatGPT (Ctrl+V) to get instant solutions.
+            </div>
+            <details class="prompt-details">
+                <summary>👁️ Preview the AI Prompt that will be copied</summary>
+                <pre id="ai-prompt-content" class="prompt-pre">{escaped_ai_prompt}</pre>
+            </details>
         </div>
 
         <h2>Diagnostic Summary</h2>
@@ -224,6 +421,47 @@ class ReportGenerator:
             Generated securely offline by the <strong>Portable SysAdmin Toolkit</strong>
         </div>
     </div>
+
+    <script>
+    function copyAIPrompt() {
+        const text = document.getElementById('ai-prompt-content').innerText;
+        const btn = document.getElementById('copy-btn');
+        const toast = document.getElementById('toast-msg');
+
+        function showSuccess() {
+            btn.innerHTML = '✅ Copied to Clipboard!';
+            btn.style.backgroundColor = '#10b981';
+            toast.style.display = 'block';
+            setTimeout(() => {
+                btn.innerHTML = '📋 Copy Prompt for ChatGPT';
+                btn.style.backgroundColor = '';
+            }, 3500);
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(showSuccess).catch(fallback);
+        } else {
+            fallback();
+        }
+
+        function fallback() {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showSuccess();
+            } catch (err) {
+                alert('Could not auto-copy. Please select and copy the text from the preview box below.');
+            }
+            document.body.removeChild(textArea);
+        }
+    }
+    </script>
 </body>
 </html>
 """

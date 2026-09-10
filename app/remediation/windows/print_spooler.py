@@ -1,5 +1,5 @@
-import subprocess
 from ..base import BaseRemediation
+
 
 class RestartPrintSpooler(BaseRemediation):
     @property
@@ -33,5 +33,5 @@ class RestartPrintSpooler(BaseRemediation):
             if "Running" in result.stdout:
                 return True, "Print Spooler is running."
             return False, "Print Spooler is not running."
-        except:
+        except Exception:
             return False, "Verification check failed."

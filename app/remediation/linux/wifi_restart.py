@@ -1,5 +1,5 @@
-import subprocess
 from ..base import BaseRemediation
+
 
 class RestartNetworkManager(BaseRemediation):
     @property
@@ -33,5 +33,5 @@ class RestartNetworkManager(BaseRemediation):
             if "active" in result.stdout:
                 return True, "NetworkManager is active."
             return False, "NetworkManager is not active."
-        except:
+        except Exception:
             return False, "Verification check failed."

@@ -1,7 +1,8 @@
-import os
 import ctypes
-import platform
 import getpass
+import os
+import platform
+
 
 def is_admin():
     """

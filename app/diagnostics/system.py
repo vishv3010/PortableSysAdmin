@@ -1,7 +1,7 @@
 import platform
-import subprocess
-import os
+
 from .base import BaseDiagnostic, DiagnosticResult
+
 
 class SystemDiagnostic(BaseDiagnostic):
     def run(self) -> DiagnosticResult:
@@ -44,7 +44,7 @@ class SystemDiagnostic(BaseDiagnostic):
                     message = "High RAM usage detected."
                     
         except Exception as e:
-            self.logger.error(f"System diagnostic partially failed: {str(e)}")
+            self.logger.error(f"System diagnostic partially failed: {e!s}")
             status = "WARNING"
             message = "Could not collect full system information."
 

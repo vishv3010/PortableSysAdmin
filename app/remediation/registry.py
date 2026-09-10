@@ -1,10 +1,10 @@
-import pkgutil
 import importlib
 import inspect
-import sys
 import os
+import pkgutil
 
 from .base import BaseRemediation
+
 
 class RemediationRegistry:
     def __init__(self):

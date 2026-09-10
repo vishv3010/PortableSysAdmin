@@ -3,25 +3,36 @@ echo "===================================================="
 echo "        PORTABLE SYSADMIN TOOLKIT LAUNCHER"
 echo "===================================================="
 
-# Determine the directory where START.sh is located
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
+PROJECT_ROOT="$(cd "$(dirname "$SCRIPT_PATH")" >/dev/null 2>&1 && pwd)"
 cd "$PROJECT_ROOT"
 
-# Start the AI Server in the background if it exists
-if [ -f "$PROJECT_ROOT/bin/llama-server" ]; then
-    echo "[INFO] Booting offline AI Brain in the background (Optimized for CPU)..."
-    "$PROJECT_ROOT/bin/llama-server" -m "$PROJECT_ROOT/models/model.gguf" --port 8080 -t 4 -c 2048 -b 512 > /dev/null 2>&1 &
-    SERVER_PID=$!
-    # Wait 3 seconds for server to spin up
-    sleep 3
-else
-    echo "[WARNING] Local AI Server not found in bin/. AI analysis will fallback to mocked logic."
+# Check for root, elevate if needed
+if [ "$EUID" -ne 0 ]; then
+    echo "[INFO] Elevating privileges to run SysAdmin Toolkit..."
+    exec sudo bash "$SCRIPT_PATH" "$@"
 fi
 
+# Define cleanup trap to ensure background AI processes are terminated on exit
+cleanup() {
+    pkill -f llama-server 2>/dev/null || true
+    rm -f /tmp/llama-server 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM
+
+# Ensure clean state at startup
+cleanup
+
+echo "[INFO] Offline AI ready on-demand (0% CPU background footprint at startup)."
+
+
 # Check for Python
-if [ -f "$PROJECT_ROOT/python_portable_linux/python/bin/python3" ]; then
+if [ -x "$PROJECT_ROOT/python_portable_linux/python/bin/python3" ]; then
     echo "[INFO] Using bundled Portable Python for Linux."
     PYTHON_EXE="$PROJECT_ROOT/python_portable_linux/python/bin/python3"
+elif [ -x "$PROJECT_ROOT/python_portable_linux/python/bin/python3.11" ]; then
+    echo "[INFO] Using bundled Portable Python for Linux."
+    PYTHON_EXE="$PROJECT_ROOT/python_portable_linux/python/bin/python3.11"
 elif command -v python3 &>/dev/null; then
     PYTHON_EXE="python3"
 elif command -v python &>/dev/null; then
@@ -36,8 +47,5 @@ echo "[INFO] Starting Toolkit UI..."
 "$PYTHON_EXE" app/main.py
 
 # Cleanup AI Server when UI closes
-if [ ! -z "$SERVER_PID" ]; then
-    echo "[INFO] Shutting down AI Server..."
-    kill $SERVER_PID 2>/dev/null
-fi
+cleanup
 echo "[INFO] Goodbye!"

@@ -1,5 +1,5 @@
-import subprocess
 from ..base import BaseRemediation
+
 
 class RunDiskCleanup(BaseRemediation):
     @property
@@ -21,7 +21,7 @@ class RunDiskCleanup(BaseRemediation):
         try:
             # Note: cleanmgr /sagerun usually requires /sageset to be configured first, 
             # but /autoclean or /lowdisk also work without GUI prompts.
-            result = self.secure_run(["cleanmgr.exe", "/autoclean"], capture_output=True, text=True)
+            self.secure_run(["cleanmgr.exe", "/autoclean"], capture_output=True, text=True)
             return True, "Windows Disk Cleanup triggered."
         except FileNotFoundError:
             return False, "cleanmgr.exe not found."

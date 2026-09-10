@@ -1,5 +1,5 @@
-import subprocess
 from ..base import BaseRemediation
+
 
 class RestartWiFiAdapter(BaseRemediation):
     @property

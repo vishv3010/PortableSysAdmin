@@ -1,6 +1,8 @@
-import shutil
 import os
+import shutil
+
 from .base import BaseDiagnostic, DiagnosticResult
+
 
 class DiskDiagnostic(BaseDiagnostic):
     def run(self) -> DiagnosticResult:
@@ -44,7 +46,7 @@ class DiskDiagnostic(BaseDiagnostic):
                 message = f"Could not locate root path {path}."
 
         except Exception as e:
-            self.logger.error(f"Disk diagnostic failed: {str(e)}")
+            self.logger.error(f"Disk diagnostic failed: {e!s}")
             status = "WARNING"
             message = "Could not collect disk information."
 

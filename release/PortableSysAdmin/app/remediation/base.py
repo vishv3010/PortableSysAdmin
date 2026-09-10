@@ -1,7 +1,7 @@
-import json
 import subprocess
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Tuple
+from typing import Any
+
 
 class BaseRemediation(ABC):
     def __init__(self, platform_info: dict, logger):
@@ -10,34 +10,31 @@ class BaseRemediation(ABC):
 
     @property
     @abstractmethod
-    def metadata(self) -> Dict[str, Any]:
+    def metadata(self) -> dict[str, Any]:
         """
         Must return: id, name, platform, risk, requires_admin, description, rollback_available
         """
-        pass
 
     @abstractmethod
-    def execute(self, dry_run: bool = False) -> Tuple[bool, str]:
+    def execute(self, dry_run: bool = False) -> tuple[bool, str]:
         """
         Returns (success_boolean, message)
         """
-        pass
 
     @abstractmethod
-    def verify(self) -> Tuple[bool, str]:
+    def verify(self) -> tuple[bool, str]:
         """
         Returns (success_boolean, message)
         """
-        pass
 
-    def pre_flight(self) -> Tuple[bool, str]:
+    def pre_flight(self) -> tuple[bool, str]:
         """
         Optional: Check if the required binaries or conditions are met before execution.
         Default is to pass if not explicitly implemented.
         """
         return True, "Pre-flight checks passed (default)."
 
-    def rollback(self) -> Tuple[bool, str]:
+    def rollback(self) -> tuple[bool, str]:
         """
         Optional: Reverses the execution. Required if rollback_available is True in metadata.
         """

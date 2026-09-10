@@ -1,5 +1,6 @@
 import os
 
+
 class KnowledgeBase:
     def __init__(self, project_root, logger):
         self.kb_dir = os.path.join(project_root, "knowledge")

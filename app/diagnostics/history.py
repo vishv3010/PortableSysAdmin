@@ -1,6 +1,7 @@
-import os
 import json
+import os
 from datetime import datetime
+
 
 class DiagnosticHistory:
     """
@@ -16,7 +17,8 @@ class DiagnosticHistory:
     def append_record(self, diagnostic_result):
         """Appends a new diagnostic record with a timestamp."""
         record = diagnostic_result.to_dict()
-        record['timestamp'] = datetime.now().isoformat()
+        from datetime import timezone
+        record['timestamp'] = datetime.now(timezone.utc).astimezone().isoformat()
         
         try:
             with open(self.history_file, 'r') as f:

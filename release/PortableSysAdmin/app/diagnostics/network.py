@@ -1,5 +1,7 @@
 import subprocess
+
 from .base import BaseDiagnostic, DiagnosticResult
+
 
 class NetworkDiagnostic(BaseDiagnostic):
     def run(self) -> DiagnosticResult:
@@ -24,10 +26,10 @@ class NetworkDiagnostic(BaseDiagnostic):
                 message = "Internet connectivity (ping 8.8.8.8) failed."
                 
         except Exception as e:
-            self.logger.error(f"Network ping test failed: {str(e)}")
+            self.logger.error(f"Network ping test failed: {e!s}")
             status = "FAIL"
             severity = "HIGH"
-            message = f"Network test threw an error: {str(e)}"
+            message = f"Network test threw an error: {e!s}"
             
         return DiagnosticResult(
             category="network",

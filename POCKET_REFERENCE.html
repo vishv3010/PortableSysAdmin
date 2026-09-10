@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portable SysAdmin Pocket Reference</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --border: #334155;
+    --accent: #38bdf8;
+    --accent-hover: #0284c7;
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --green: #4ade80;
+    --warn: #facc15;
+    --danger: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
+  body { background: var(--bg); color: var(--text); padding: 20px; line-height: 1.5; }
+  header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px; }
+  h1 { font-size: 1.5rem; color: var(--accent); }
+  .badge { background: #0369a1; color: #fff; padding: 3px 8px; border-radius: 9999px; font-size: 0.75rem; }
+  .nav { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .tab-btn { background: none; border: none; color: var(--muted); padding: 8px 16px; cursor: pointer; font-size: 0.95rem; font-weight: 600; border-bottom: 2px solid transparent; }
+  .tab-btn.active { color: var(--accent); border-color: var(--accent); }
+  .search-box { width: 100%; padding: 12px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 1rem; margin-bottom: 20px; outline: none; }
+  .search-box:focus { border-color: var(--accent); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; }
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .card-title { font-weight: 700; color: var(--text); font-size: 1rem; }
+  .card-tag { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+  .tag-safe { background: rgba(74, 222, 128, 0.15); color: var(--green); }
+  .tag-caution { background: rgba(250, 204, 21, 0.15); color: var(--warn); }
+  .cmd-block { background: #0b0f19; border: 1px solid #1e293b; border-radius: 6px; padding: 8px 12px; font-family: monospace; font-size: 0.85rem; margin-top: 8px; position: relative; word-break: break-all; }
+  .cmd-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
+  .cmd-text { color: var(--green); }
+  .cmd-text.win { color: var(--accent); }
+  .copy-btn { position: absolute; right: 8px; top: 6px; background: #1e293b; border: 1px solid #334155; color: var(--muted); border-radius: 4px; font-size: 0.7rem; padding: 2px 6px; cursor: pointer; }
+  .copy-btn:hover { color: var(--text); background: var(--accent-hover); }
+  /* Calculator */
+  .calc-container { background: var(--card); padding: 24px; border-radius: 8px; border: 1px solid var(--border); max-width: 600px; margin: 0 auto; }
+  .calc-input { display: flex; gap: 12px; margin-bottom: 20px; }
+  .calc-input input { flex: 1; padding: 10px; background: #0b0f19; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 1rem; }
+  .calc-btn { padding: 10px 20px; background: var(--accent); border: none; border-radius: 6px; color: #000; font-weight: bold; cursor: pointer; }
+  .calc-res { background: #0b0f19; border: 1px solid var(--border); border-radius: 6px; padding: 16px; font-family: monospace; font-size: 0.9rem; }
+  .calc-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e293b; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Portable SysAdmin Pocket Reference</h1>
+    <p style="color: var(--muted); font-size: 0.85rem;">Offline Quick Rescue & Cheatsheet Guide</p>
+  </div>
+  <span class="badge">USB EDITION (OFFLINE)</span>
+</header>
+
+<div class="nav">
+  <button class="tab-btn active" onclick="showTab('commands')">Quick Cheatsheet</button>
+  <button class="tab-btn" onclick="showTab('subnet')">Subnet Calculator</button>
+  <button class="tab-btn" onclick="showTab('runbooks')">Emergency Runbooks</button>
+</div>
+
+<!-- TAB 1: COMMAND CHEATSHEET -->
+<div id="tab-commands">
+  <input type="text" id="search" class="search-box" placeholder="Instant Search (e.g. disk, dns, port, memory, firewall, process, service)..." oninput="filterCards()">
+  <div class="grid" id="cards-grid"></div>
+</div>
+
+<!-- TAB 2: SUBNET CALCULATOR -->
+<div id="tab-subnet" class="hidden">
+  <div class="calc-container">
+    <h2 style="margin-bottom: 12px; color: var(--accent);">IPv4 Subnet & CIDR Calculator</h2>
+    <div class="calc-input">
+      <input type="text" id="cidr-in" value="192.168.1.1/24" placeholder="e.g. 10.0.0.1/16">
+      <button class="calc-btn" onclick="calculateSubnet()">Calculate</button>
+    </div>
+    <div class="calc-res" id="calc-out">
+      <div class="calc-row"><span>IP Address:</span><span id="res-ip">192.168.1.1</span></div>
+      <div class="calc-row"><span>Netmask:</span><span id="res-mask">255.255.255.0</span></div>
+      <div class="calc-row"><span>Network ID:</span><span id="res-net">192.168.1.0</span></div>
+      <div class="calc-row"><span>Broadcast:</span><span id="res-bcast">192.168.1.255</span></div>
+      <div class="calc-row"><span>Usable Host Range:</span><span id="res-range">192.168.1.1 - 192.168.1.254</span></div>
+      <div class="calc-row"><span>Total Usable Hosts:</span><span id="res-hosts">254</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: RUNBOOKS -->
+<div id="tab-runbooks" class="hidden">
+  <div class="grid">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Runbook: Host Completely Unpingable</span><span class="card-tag tag-caution">Network</span></div>
+      <ol style="margin-left: 20px; font-size: 0.9rem; color: var(--muted); margin-top: 8px;">
+        <li>Check physical link / Wi-Fi association: <code>ip link show</code></li>
+        <li>Check Default Gateway: <code>ip route show</code></li>
+        <li>Test loopback ping: <code>ping -c 2 127.0.0.1</code></li>
+        <li>Check DNS resolver: <code>resolvectl status</code></li>
+        <li>Flush and restart adapter: <code>systemctl restart NetworkManager</code></li>
+      </ol>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Runbook: Root Filesystem at 100% Full</span><span class="card-tag tag-safe">Storage</span></div>
+      <ol style="margin-left: 20px; font-size: 0.9rem; color: var(--muted); margin-top: 8px;">
+        <li>Find top 10 largest folders: <code>du -ahx / | sort -rh | head -n 10</code></li>
+        <li>Clear apt cache: <code>apt-get clean && apt-get autoremove -y</code></li>
+        <li>Vacuum systemd logs: <code>journalctl --vacuum-time=2d</code></li>
+        <li>Check unlinked deleted open files: <code>lsof +L1</code></li>
+        <li>Clear temporary files: <code>rm -rf /tmp/* /var/tmp/*</code></li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<script>
+const commands = [
+  { topic: "Disk Space", desc: "Find top 10 largest directories/files", tag: "SAFE", linux: "du -ahx / 2>/dev/null | sort -rh | head -n 10", win: "Get-ChildItem C:\\ -Recurse -File | Sort Length -Desc | Select -First 10" },
+  { topic: "Disk Cleanup", desc: "Clear package cache & temp junk", tag: "SAFE", linux: "apt-get clean && apt-get autoremove -y && rm -rf /tmp/*", win: "cleanmgr /sagerun:1 & del /q/f/s %TEMP%\\*" },
+  { topic: "Listening Ports", desc: "List all listening ports & processes", tag: "SAFE", linux: "ss -tulpn || netstat -tulpn", win: "netstat -ano | findstr LISTENING" },
+  { topic: "DNS Resolver", desc: "Flush local DNS cache", tag: "SAFE", linux: "resolvectl flush-caches", win: "ipconfig /flushdns" },
+  { topic: "Port Check", desc: "Test remote TCP port without telnet", tag: "SAFE", linux: "nc -zv <host> <port>", win: "Test-NetConnection -ComputerName <host> -Port <port>" },
+  { topic: "Memory Hogs", desc: "Top 10 memory consuming processes", tag: "SAFE", linux: "ps aux --sort=-%mem | head -n 11", win: "Get-Process | Sort WorkingSet64 -Desc | Select -First 10" },
+  { topic: "CPU Hogs", desc: "Top 10 CPU consuming processes", tag: "SAFE", linux: "ps aux --sort=-%cpu | head -n 11", win: "Get-Process | Sort CPU -Desc | Select -First 10" },
+  { topic: "Kill Process", desc: "Force terminate unresponsive task", tag: "CAUTION", linux: "kill -9 <PID> || pkill -9 <name>", win: "taskkill /F /PID <PID> || taskkill /F /IM <name>.exe" },
+  { topic: "Failed Services", desc: "List degraded or failed system services", tag: "SAFE", linux: "systemctl --failed", win: "Get-Service | Where {$_.Status -ne 'Running' -and $_.StartType -eq 'Automatic'}" },
+  { topic: "System Logs", desc: "View real-time error & warning events", tag: "SAFE", linux: "journalctl -p 3 -xb -n 40 --no-pager", win: "Get-EventLog -LogName System -EntryType Error -Newest 30" },
+  { topic: "Firewall Status", desc: "Inspect current active firewall rules", tag: "SAFE", linux: "ufw status verbose || iptables -L -n -v", win: "netsh advfirewall show allprofiles" },
+  { topic: "System Repair", desc: "Verify and repair corrupted OS files", tag: "CAUTION", linux: "dpkg --configure -a", win: "sfc /scannow & DISM /Online /Cleanup-Image /RestoreHealth" }
+];
+
+function renderCards(list) {
+  const grid = document.getElementById("cards-grid");
+  grid.innerHTML = "";
+  list.forEach(c => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div>
+        <div class="card-header">
+          <span class="card-title">${c.desc}</span>
+          <span class="card-tag ${c.tag === 'SAFE' ? 'tag-safe' : 'tag-caution'}">${c.tag}</span>
+        </div>
+        <div style="font-size:0.8rem; color:var(--muted);">${c.topic}</div>
+        <div class="cmd-block">
+          <div class="cmd-label">Linux</div>
+          <div class="cmd-text">${c.linux}</div>
+          <button class="copy-btn" onclick="copyText('${c.linux.replace(/'/g, "\\'")}')">Copy</button>
+        </div>
+        <div class="cmd-block">
+          <div class="cmd-label">Windows</div>
+          <div class="cmd-text win">${c.win}</div>
+          <button class="copy-btn" onclick="copyText('${c.win.replace(/'/g, "\\'")}')">Copy</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function filterCards() {
+  const q = document.getElementById("search").value.toLowerCase();
+  const filtered = commands.filter(c => 
+    c.topic.toLowerCase().includes(q) || 
+    c.desc.toLowerCase().includes(q) || 
+    c.linux.toLowerCase().includes(q) || 
+    c.win.toLowerCase().includes(q)
+  );
+  renderCards(filtered);
+}
+
+function showTab(tab) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("tab-commands").classList.add("hidden");
+  document.getElementById("tab-subnet").classList.add("hidden");
+  document.getElementById("tab-runbooks").classList.add("hidden");
+
+  if (tab === 'commands') {
+    document.getElementById("tab-commands").classList.remove("hidden");
+    event.target.classList.add("active");
+  } else if (tab === 'subnet') {
+    document.getElementById("tab-subnet").classList.remove("hidden");
+    event.target.classList.add("active");
+  } else if (tab === 'runbooks') {
+    document.getElementById("tab-runbooks").classList.remove("hidden");
+    event.target.classList.add("active");
+  }
+}
+
+function copyText(txt) {
+  navigator.clipboard.writeText(txt);
+  alert("Command copied to clipboard!");
+}
+
+function calculateSubnet() {
+  const raw = document.getElementById("cidr-in").value.trim();
+  const [ipStr, cidrStr] = raw.split("/");
+  const cidr = parseInt(cidrStr, 10);
+  if (!ipStr || isNaN(cidr) || cidr < 1 || cidr > 32) {
+    alert("Invalid CIDR format! Use e.g. 192.168.1.1/24");
+    return;
+  }
+  const ipParts = ipStr.split(".").map(Number);
+  if (ipParts.length !== 4 || ipParts.some(p => isNaN(p) || p < 0 || p > 255)) {
+    alert("Invalid IPv4 address!");
+    return;
+  }
+  const ipInt = (ipParts[0] << 24) | (ipParts[1] << 16) | (ipParts[2] << 8) | ipParts[3];
+  const maskInt = ~((1 << (32 - cidr)) - 1);
+  const netInt = ipInt & maskInt;
+  const bcastInt = netInt | ~maskInt;
+  
+  const toIp = n => [(n>>>24)&255, (n>>>16)&255, (n>>>8)&255, n&255].join(".");
+  const usableHosts = cidr >= 31 ? 0 : Math.pow(2, 32 - cidr) - 2;
+
+  document.getElementById("res-ip").innerText = ipStr;
+  document.getElementById("res-mask").innerText = toIp(maskInt);
+  document.getElementById("res-net").innerText = toIp(netInt);
+  document.getElementById("res-bcast").innerText = toIp(bcastInt);
+  document.getElementById("res-range").innerText = cidr >= 31 ? "N/A" : `${toIp(netInt + 1)} - ${toIp(bcastInt - 1)}`;
+  document.getElementById("res-hosts").innerText = usableHosts.toLocaleString();
+}
+
+renderCards(commands);
+</script>
+</body>
+</html>

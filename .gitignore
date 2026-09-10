@@ -14,3 +14,7 @@ llama.log
 # Exclude python cache
 __pycache__/
 *.pyc
+
+# Exclude build artifacts
+build/
+*.deb

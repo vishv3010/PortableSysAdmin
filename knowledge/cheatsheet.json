@@ -1,0 +1,146 @@
+[
+  {
+    "topic": "Disk Space",
+    "category": "disk",
+    "description": "Find top 10 largest files/directories",
+    "linux": "du -ahx / 2>/dev/null | sort -rh | head -n 10",
+    "windows": "Get-ChildItem C:\\ -Recurse -File -ErrorAction SilentlyContinue | Sort-Object Length -Descending | Select-Object -First 10 FullName, @{Name=\"GB\";Expression={[math]::round($_.Length/1GB,2)}}",
+    "risk": "SAFE"
+  },
+  {
+    "topic": "Disk Space",
+    "category": "disk",
+    "description": "Clean package manager & temporary cache",
+    "linux": "apt-get clean && apt-get autoremove -y && rm -rf /tmp/*",
+    "windows": "cleanmgr /sagerun:1 & del /q/f/s %TEMP%\\*",
+    "risk": "SAFE"
+  },
+  {
+    "topic": "Disk Space",
+    "category": "disk",
+    "description": "Check disk SMART health & errors",
+    "linux": "smartctl -H /dev/sda || dmesg | grep -iE 'ata|disk|error'",
+    "windows": "wmic diskdrive get status,model",
+    "risk": "SAFE"
+  },
+  {
+    "topic": "Networking",
+    "category": "network",
+    "description": "Find all listening ports and associated processes",
+    "linux": "ss -tulpn || netstat -tulpn",
+    "windows": "netstat -ano | findstr LISTENING",
+    "risk": "SAFE"
+  },
+  {
+    "topic": "Networking",
+    "category": "network",
+    "description": "Flush DNS Resolver Cache",
+    "linux": "systemd-resolve --flush-caches || resolvectl flush-caches",
+    "windows": "ipconfig /flushdns",
+    "risk": "SAFE"
+  },
+  {
+    "topic": "Networking",
+    "category": "network",
+    "description": "Test TCP port connectivity without telnet",
+    "linux": "nc -zv <host> <port> || timeout 2 bash -c '</dev/tcp/<host>/<port>'",
+    "windows": "Test-NetConnection -ComputerName <host> -Port <port>",
+    "risk": "SAFE"
+  },
+  {
+    "topic": "Networking",
+    "category": "network",
+    "description": "Restart Network Stack / Interfaces",
+    "linux": "systemctl restart NetworkManager || systemctl restart networking",
+    "windows": "netsh int ip reset & netsh winsock reset",
+    "risk": "CONFIRMATION_REQUIRED"
+  },
+  {
+    "topic": "Processes",
+    "category": "process",
+    "description": "Find top 10 memory consuming processes",
+    "linux": "ps aux --sort=-%mem | head -n 11",
+    "windows": "Get-Process | Sort-Object WorkingSet64 -Descending | Select-Object -First 10 Name, Id, @{Name=\"MB\";Expression={[math]::round($_.WorkingSet64/1MB,2)}}",
+    "risk": "SAFE"
+  },
+  {
+    "topic": "Processes",
+    "category": "process",
+    "description": "Find top 10 CPU consuming processes",
+    "linux": "ps aux --sort=-%cpu | head -n 11",
+    "windows": "Get-Process | Sort-Object CPU -Descending | Select-Object -First 10 Name, Id, CPU",
+    "risk": "SAFE"
+  },
+  {
+    "topic": "Processes",
+    "category": "process",
+    "description": "Force kill process by Name or PID",
+    "linux": "kill -9 <PID> || pkill -9 <process_name>",
+    "windows": "taskkill /F /PID <PID> || taskkill /F /IM <process_name>.exe",
+    "risk": "CONFIRMATION_REQUIRED"
+  },
+  {
+    "topic": "Services",
+    "category": "service",
+    "description": "List all failed or degraded services",
+    "linux": "systemctl --failed",
+    "windows": "Get-Service | Where-Object {$_.Status -ne 'Running' -and $_.StartType -eq 'Automatic'}",
+    "risk": "SAFE"
+  },
+  {
+    "topic": "Services",
+    "category": "service",
+    "description": "Restart Print Spooler service",
+    "linux": "systemctl restart cups",
+    "windows": "net stop spooler & del /Q /F /S %systemroot%\\System32\\Spool\\Printers\\* & net start spooler",
+    "risk": "SAFE"
+  },
+  {
+    "topic": "Logs",
+    "category": "logs",
+    "description": "View live system errors and warnings",
+    "linux": "journalctl -p 3 -xb -n 50 --no-pager",
+    "windows": "Get-EventLog -LogName System -EntryType Error,Warning -Newest 30",
+    "risk": "SAFE"
+  },
+  {
+    "topic": "Firewall",
+    "category": "security",
+    "description": "Check firewall rules and status",
+    "linux": "ufw status verbose || iptables -L -n -v",
+    "windows": "netsh advfirewall show allprofiles",
+    "risk": "SAFE"
+  },
+  {
+    "topic": "Firewall",
+    "category": "security",
+    "description": "Allow specific incoming port (e.g. 8080)",
+    "linux": "ufw allow 8080/tcp",
+    "windows": "netsh advfirewall firewall add rule name=\"Port 8080\" dir=in action=allow protocol=TCP localport=8080",
+    "risk": "CONFIRMATION_REQUIRED"
+  },
+  {
+    "topic": "Users",
+    "category": "security",
+    "description": "Unlock user account or check login failures",
+    "linux": "pam_tally2 --user=<username> --reset || faillock --user <username> --reset",
+    "windows": "Unlock-ADAccount -Identity <username> || net user <username> /active:yes",
+    "risk": "CONFIRMATION_REQUIRED"
+  },
+  {
+    "topic": "Repair",
+    "category": "recovery",
+    "description": "Check and repair OS system files",
+    "linux": "debsums -c || dpkg --configure -a",
+    "windows": "sfc /scannow & DISM /Online /Cleanup-Image /RestoreHealth",
+    "risk": "CONFIRMATION_REQUIRED"
+  },
+  {
+    "topic": "Docker",
+    "category": "containers",
+    "description": "Clean unused Docker containers, images, and networks",
+    "linux": "docker system prune -af --volumes",
+    "windows": "docker system prune -af --volumes",
+    "risk": "CONFIRMATION_REQUIRED"
+  }
+]

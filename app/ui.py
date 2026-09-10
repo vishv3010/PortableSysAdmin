@@ -1,5 +1,5 @@
 import os
-import sys
+
 
 # ANSI Colors
 class Colors:
@@ -71,6 +71,12 @@ class UI:
   {Colors.GREEN}[3]{Colors.ENDC} Open Remediation Engine (Auto-Fixes)
   {Colors.GREEN}[4]{Colors.ENDC} Generate Enterprise HTML Report
   {Colors.HEADER}[5]{Colors.ENDC} Ask AI For Root Cause Analysis
+  
+  {Colors.CYAN}[6]{Colors.ENDC} Quick Triage & Auto-Doctor (Instant 2-Sec Check & 1-Click Fix)
+  {Colors.CYAN}[7]{Colors.ENDC} Instant SysAdmin Command Finder (Offline Cheatsheet)
+  {Colors.CYAN}[8]{Colors.ENDC} Open HTML Pocket Reference Guide (Browser)
+  
+  {Colors.BOLD}{Colors.GREEN}[9]{Colors.ENDC} 🚀 1-Click Safe System Speed-Up (Zero Data Loss RAM/Disk/CPU Boost)
   
   {Colors.FAIL}[0]{Colors.ENDC} Exit Toolkit
 """
