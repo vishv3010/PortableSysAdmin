@@ -19,7 +19,7 @@ class KnowledgeBase:
             if filename.endswith(".txt") or filename.endswith(".md"):
                 filepath = os.path.join(self.kb_dir, filename)
                 try:
-                    with open(filepath, 'r') as f:
+                    with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
                         compiled += f"\n--- KNOWLEDGE FRAGMENT: {filename} ---\n"
                         compiled += f.read().strip() + "\n"
                 except Exception as e:

@@ -11,7 +11,7 @@ class AIAnalyzer:
         self.project_root = project_root
         config_path = os.path.join(project_root, "config", "ai.json")
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, 'r', encoding='utf-8', errors='replace') as f:
                 self.config = json.load(f)
         except Exception as e:
             self.logger.error(f"Failed to load AI config: {e}")

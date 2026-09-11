@@ -115,7 +115,7 @@ def main():
                 result = diag.run()
                 print(result.to_json())
                 history.append_record(result)
-                with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a') as f:
+                with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a', encoding='utf-8') as f:
                     f.write(json.dumps(result.to_dict()) + "\n")
                 
             input("\nPress Enter to continue...")
@@ -126,7 +126,7 @@ def main():
             result = diag.run()
             print(result.to_json())
             
-            with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a') as f:
+            with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a', encoding='utf-8') as f:
                 f.write(json.dumps(result.to_dict()) + "\n")
                 
             input("\nPress Enter to continue...")
@@ -213,7 +213,7 @@ def main():
 
             if sub_choice == '1':
                 if os.path.exists(prompt_file):
-                    with open(prompt_file, 'r') as f:
+                    with open(prompt_file, 'r', encoding='utf-8', errors='replace') as f:
                         content = f.read()
                     copied = copy_to_clipboard(content, platform_info.get("os", "linux"))
                     if copied:
@@ -245,7 +245,7 @@ def main():
                     continue
 
                 diagnostics = []
-                with open(diag_path, 'r') as f:
+                with open(diag_path, 'r', encoding='utf-8', errors='replace') as f:
                     for line in f:
                         if line.strip():
                             diagnostics.append(json.loads(line))

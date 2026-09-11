@@ -11,8 +11,12 @@ class DiagnosticHistory:
     def __init__(self, session_log_dir):
         self.history_file = os.path.join(session_log_dir, "history.json")
         if not os.path.exists(self.history_file):
-            with open(self.history_file, 'w') as f:
-                json.dump([], f)
+            try:
+                os.makedirs(os.path.dirname(os.path.abspath(self.history_file)), exist_ok=True)
+                with open(self.history_file, 'w', encoding='utf-8') as f:
+                    json.dump([], f)
+            except Exception:
+                pass
 
     def append_record(self, diagnostic_result):
         """Appends a new diagnostic record with a timestamp."""
@@ -21,7 +25,7 @@ class DiagnosticHistory:
         record['timestamp'] = datetime.now(timezone.utc).astimezone().isoformat()
         
         try:
-            with open(self.history_file, 'r') as f:
+            with open(self.history_file, 'r', encoding='utf-8', errors='replace') as f:
                 history = json.load(f)
             
             history.append(record)
@@ -30,7 +34,7 @@ class DiagnosticHistory:
             if len(history) > 100:
                 history = history[-100:]
                 
-            with open(self.history_file, 'w') as f:
+            with open(self.history_file, 'w', encoding='utf-8') as f:
                 json.dump(history, f, indent=2)
         except Exception:
             pass
@@ -41,7 +45,7 @@ class DiagnosticHistory:
         Useful for checking if a warning condition is sustained.
         """
         try:
-            with open(self.history_file, 'r') as f:
+            with open(self.history_file, 'r', encoding='utf-8', errors='replace') as f:
                 history = json.load(f)
             
             # Filter matches
