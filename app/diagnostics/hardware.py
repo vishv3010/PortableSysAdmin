@@ -18,7 +18,8 @@ class HardwareDiagnostic(BaseDiagnostic):
             "audio": self._check_audio(),
             "battery": self._check_battery(),
             "input_devices": self._check_input_devices(),
-            "usb_devices": self._check_usb_devices()
+            "usb_devices": self._check_usb_devices(),
+            "wifi": self._check_wifi()
         }
 
         status = "PASS"
@@ -72,6 +73,17 @@ class HardwareDiagnostic(BaseDiagnostic):
             recommendations.append("No keyboards or pointing devices detected in system hardware registry.")
         else:
             summary_parts.append(f"{kb_count} keyboard(s), {pointer_count} pointer(s)")
+
+        # 4. Evaluate Wi-Fi Hardware
+        wifi_info = evidence["wifi"]
+        if not wifi_info.get("detected", False):
+            summary_parts.append("No Wi-Fi hardware found on bus")
+            recommendations.append("No Wi-Fi hardware found on PCIe/USB bus. Check physical M.2 seating, hardware switch, or BIOS WLAN toggle.")
+        elif wifi_info.get("pnp_status", "OK") != "OK":
+            summary_parts.append(f"Wi-Fi status: {wifi_info['pnp_status']}")
+            recommendations.append(f"Wi-Fi hardware reported issue ({wifi_info['pnp_status']}). Use Wi-Fi Hardware Recovery (Option 9) to power-cycle card.")
+        else:
+            summary_parts.append("Wi-Fi hardware: OK")
 
         message = "Hardware audit: " + ", ".join(summary_parts) + "."
 
@@ -303,3 +315,79 @@ class HardwareDiagnostic(BaseDiagnostic):
             if self.logger:
                 self.logger.warning(f"USB diagnostic error: {e}")
         return result
+
+    def _check_wifi(self) -> dict:
+        result = {"detected": False, "devices": [], "service": "Unknown", "pnp_status": "OK"}
+        try:
+            if self.platform == "linux":
+                # Check for wireless interfaces in /sys/class/net
+                net_dir = "/sys/class/net"
+                if os.path.exists(net_dir):
+                    for iface in os.listdir(net_dir):
+                        if os.path.exists(os.path.join(net_dir, iface, "wireless")) or iface.startswith(("wlan", "wlp", "wlo")):
+                            result["detected"] = True
+                            result["devices"].append(f"[Interface] {iface}")
+
+                # Check lspci for hardware chip
+                lspci_out = subprocess.run(["lspci"], capture_output=True, text=True, timeout=2)
+                if lspci_out.returncode == 0:
+                    for line in lspci_out.stdout.splitlines():
+                        if any(w in line.lower() for w in ["network controller", "wireless", "802.11", "wi-fi"]):
+                            result["detected"] = True
+                            result["devices"].append(f"[PCIe] {line.strip()}")
+
+                # Check rfkill
+                rf_out = subprocess.run(["rfkill", "list"], capture_output=True, text=True, timeout=2)
+                if rf_out.returncode == 0:
+                    if "hard blocked: yes" in rf_out.stdout.lower():
+                        result["pnp_status"] = "Hard Blocked (Physical Switch)"
+                    elif "soft blocked: yes" in rf_out.stdout.lower():
+                        result["pnp_status"] = "Soft Blocked (Airplane Mode)"
+
+            elif self.platform == "windows":
+                ps_cmd = r'''
+$out = @{ Detected = $false; Devices = @(); Service = "Unknown"; PnPStatus = "OK" }
+$svc = Get-Service -Name WlanSvc -ErrorAction SilentlyContinue
+if ($svc) { $out.Service = "$($svc.Status)" }
+
+$pnp = @(Get-PnpDevice -Class Net -ErrorAction SilentlyContinue | Where-Object {
+    $_.FriendlyName -match "Wi-Fi|Wireless|802\.11|WLAN|Centrino|Dual Band" -or
+    $_.InstanceId -match "VEN_8086.*DEV_(095A|08B1|08B2|3165|24F3|2723|2725|43F0|02F0)" -or
+    $_.InstanceId -match "VEN_10EC.*DEV_(8821|8822|8852|C821|C822)"
+})
+if ($pnp.Count -gt 0) {
+    $out.Detected = $true
+    foreach ($d in $pnp) {
+        $st = $d.Status
+        $out.Devices += "$($d.FriendlyName) ($st)"
+        if ($st -ne 'OK') { $out.PnPStatus = "Degraded/Error ($st)" }
+    }
+} else {
+    $net = @(Get-NetAdapter -IncludeHidden -ErrorAction SilentlyContinue | Where-Object { $_.InterfaceDescription -match "Wi-Fi|Wireless|802\.11|WLAN" })
+    if ($net.Count -gt 0) {
+        $out.Detected = $true
+        foreach ($n in $net) { $out.Devices += "$($n.InterfaceDescription)" }
+    } else {
+        $out.PnPStatus = "Hardware Missing on Bus"
+    }
+}
+$out | ConvertTo-Json -Compress
+'''
+                proc = subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], capture_output=True, text=True, timeout=5)
+                if proc.returncode == 0 and proc.stdout.strip():
+                    try:
+                        data = json.loads(proc.stdout)
+                        result["detected"] = bool(data.get("Detected", False))
+                        devs = data.get("Devices", [])
+                        if isinstance(devs, str):
+                            devs = [devs]
+                        result["devices"] = devs
+                        result["service"] = data.get("Service", "Unknown")
+                        result["pnp_status"] = data.get("PnPStatus", "OK")
+                    except Exception:
+                        pass
+        except Exception as e:
+            if self.logger:
+                self.logger.warning(f"Wi-Fi diagnostic error: {e}")
+        return result
+

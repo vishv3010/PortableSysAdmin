@@ -45,6 +45,7 @@ class HardwareTester:
   
   {Colors.BOLD}{Colors.YELLOW}[7]{Colors.ENDC} 🔄 Safe Audio & Peripheral Driver/Service Reset (Instant Fix)
   {Colors.BOLD}{Colors.CYAN}[8]{Colors.ENDC} 👆 Fix Two-Finger Touchpad Scrolling (1-Click Auto-Fix)
+  {Colors.BOLD}{Colors.GREEN}[9]{Colors.ENDC} 📶 Recover Missing Wi-Fi Hardware & Code 10/43 (1-Click Deep Fix)
   
   {Colors.FAIL}[0]{Colors.ENDC} Back to Main Menu
 """)
@@ -66,6 +67,8 @@ class HardwareTester:
                 self.reset_audio_and_peripherals()
             elif choice == '8':
                 self.fix_touchpad_scroll()
+            elif choice == '9':
+                self.fix_wifi_hardware()
             elif choice in ['0', 'back', 'q', 'exit']:
                 break
             else:
@@ -430,6 +433,24 @@ Instructions:
         else:
             print("  • No external USB devices enumerated.")
 
+        # 4. Wireless & Network Controllers
+        print(f"\n{Colors.BOLD}[WIRELESS & NETWORK HARDWARE CONTROLLERS]{Colors.ENDC}")
+        wifi_info = ev.get("wifi", {})
+        wifi_devs = wifi_info.get("devices", [])
+        if wifi_devs:
+            for w in wifi_devs:
+                print(f"  • {Colors.CYAN}{w}{Colors.ENDC}")
+            p_stat = wifi_info.get("pnp_status", "OK")
+            svc_stat = wifi_info.get("service", "Unknown")
+            if p_stat != "OK":
+                UI.warning(f"  PnP Status Warning: {p_stat} (Tip: Use Option [9] to reset/cycle card)")
+            if svc_stat not in ["Unknown", "Running"]:
+                UI.warning(f"  Wireless Service Warning: {svc_stat} (WlanSvc stopped)")
+        else:
+            UI.error("  • ALERT: No Wi-Fi controller detected on motherboard PCIe or USB bus!")
+            print(f"    {Colors.YELLOW}Possible causes: Code 10/43 PCIe sleep freeze, physical M.2 seating, or hardware switch.{Colors.ENDC}")
+            print(f"    {Colors.BOLD}Tip: Run Option [9] in this menu to attempt deep hardware bus recovery.{Colors.ENDC}")
+
         input(f"\n{Colors.BOLD}Press Enter to return to Hardware Menu...{Colors.ENDC}")
 
     # =========================================================================
@@ -614,7 +635,66 @@ Instructions:
         print(f"\n{Colors.CYAN}If you were able to scroll smoothly through lines 1 to 40, your touchpad gestures are active!{Colors.ENDC}")
         input(f"\n{Colors.BOLD}Press Enter to return to Hardware Menu...{Colors.ENDC}")
 
+    # =========================================================================
+    # 9. RECOVER MISSING WI-FI HARDWARE & CODE 10/43
+    # =========================================================================
+    def fix_wifi_hardware(self):
+        UI.clear_screen(self.os_type)
+        print(f"\n{Colors.HEADER}=== 📶 RECOVER MISSING WI-FI HARDWARE & CODE 10/43 (1-CLICK DEEP FIX) ==={Colors.ENDC}\n")
+        print("Safety Guarantee: 100% Non-Destructive. Resets driver power-state & service bindings without BSOD risk.")
+        print("Solves the most common wireless hardware failures:")
+        print("  • Wi-Fi card completely missing from Windows Device Manager or Settings")
+        print("  • Device Manager Code 10 ('Device cannot start') or Code 43 (PCIe sleep freeze)")
+        print("  • WLAN AutoConfig (WlanSvc) service stopped or disabled")
+        print("  • Power saving ('Allow computer to turn off device') causing D3 sleep dropouts")
+        print("  • Linux RFKill soft/hard blocks and frozen iwlwifi/rtw88 kernel modules\n")
+
+        UI.info("Initiating deep wireless hardware recovery pipeline...")
+
+        if self.os_type == "windows":
+            from remediation.windows.wifi_hardware import FixWiFiHardwareWindows
+            action = FixWiFiHardwareWindows(self.platform_info, self.logger)
+            success, msg = action.execute(dry_run=False)
+            verified, v_msg = action.verify()
+
+            if success:
+                UI.success("Wi-Fi hardware recovery pipeline executed successfully!")
+                print("\n" + "-" * 50)
+                for line in msg.split("\n"):
+                    if line.strip():
+                        print(f"  {line.strip()}")
+                print("-" * 50)
+                if verified:
+                    UI.success(v_msg)
+            else:
+                UI.error(f"Wi-Fi hardware recovery failed: {msg}")
+
+        else:
+            from remediation.linux.wifi_hardware import FixWiFiHardwareLinux
+            action = FixWiFiHardwareLinux(self.platform_info, self.logger)
+            success, msg = action.execute(dry_run=False)
+            verified, v_msg = action.verify()
+
+            if success:
+                UI.success("Linux wireless recovery executed successfully!")
+                print("\n" + "-" * 50)
+                for line in msg.split("\n"):
+                    if line.strip():
+                        print(f"  {line.strip()}")
+                print("-" * 50)
+                if verified:
+                    UI.success(v_msg)
+            else:
+                UI.error(f"Linux wireless recovery completed with notes: {msg}")
+
+        print(f"\n{Colors.CYAN}[TIP] If Windows still does not detect Wi-Fi after hardware cycling:{Colors.ENDC}")
+        print("  1. Check your laptop chassis or keyboard for a physical Wi-Fi switch / Fn-Key (e.g. Fn + F2/F12).")
+        print("  2. Check BIOS/UEFI settings to ensure 'Wireless LAN' is Enabled.")
+        print("  3. A quick restart finalizes the PCIe bus firmware power-cycle.")
+        input(f"\n{Colors.BOLD}Press Enter to return to Hardware Menu...{Colors.ENDC}")
+
 
 def shutil_which(cmd: str) -> bool:
     import shutil
     return shutil.which(cmd) is not None
+
