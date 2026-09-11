@@ -77,6 +77,7 @@ class UI:
   {Colors.CYAN}[8]{Colors.ENDC} Open HTML Pocket Reference Guide (Browser)
   
   {Colors.BOLD}{Colors.GREEN}[9]{Colors.ENDC} 🚀 1-Click Safe System Speed-Up (Zero Data Loss RAM/Disk/CPU Boost)
+  {Colors.BOLD}{Colors.CYAN}[10]{Colors.ENDC} 🎧 Hardware & Peripherals Check (Audio, Keyboard, Battery, USB)
   
   {Colors.FAIL}[0]{Colors.ENDC} Exit Toolkit
 """

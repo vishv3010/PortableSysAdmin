@@ -96,6 +96,7 @@ def main():
             from diagnostics.process import ProcessDiagnostic
             from diagnostics.security import SecurityDiagnostic
             from diagnostics.thermal import ThermalDiagnostic
+            from diagnostics.hardware import HardwareDiagnostic
             
             history = DiagnosticHistory(session_log_dir)
             
@@ -105,6 +106,7 @@ def main():
                 ("Process", ProcessDiagnostic),
                 ("Security", SecurityDiagnostic),
                 ("Thermal", ThermalDiagnostic),
+                ("Hardware", HardwareDiagnostic),
             ]
             
             for name, diag_class in diagnostics_to_run:
@@ -316,6 +318,11 @@ def main():
             from speed_up import SafeSystemSpeedUp
             booster = SafeSystemSpeedUp(platform_info, logger, admin_status, session_log_dir)
             booster.run_interactive()
+
+        elif choice == '10':
+            from hardware_test import HardwareTester
+            tester = HardwareTester(platform_info, logger)
+            tester.run_menu()
 
         elif choice == '0':
             print("Exiting...")
