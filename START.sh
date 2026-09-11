@@ -6,6 +6,7 @@ echo "===================================================="
 SCRIPT_PATH="$(realpath "${BASH_SOURCE[0]}")"
 PROJECT_ROOT="$(cd "$(dirname "$SCRIPT_PATH")" >/dev/null 2>&1 && pwd)"
 cd "$PROJECT_ROOT"
+export PYTHONPATH="$PROJECT_ROOT:$PROJECT_ROOT/app:$PYTHONPATH"
 
 # Check for root, elevate if needed
 if [ "$EUID" -ne 0 ]; then

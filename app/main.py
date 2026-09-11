@@ -1,6 +1,15 @@
 import json
 import os
+import sys
 import time
+
+# Ensure application directory and project root are in sys.path for cross-platform imports
+_APP_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT = os.path.dirname(_APP_DIR)
+if _APP_DIR not in sys.path:
+    sys.path.insert(0, _APP_DIR)
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(1, _PROJECT_ROOT)
 
 from ai.backend import AIAnalyzer
 from diagnostics.disk import DiskDiagnostic

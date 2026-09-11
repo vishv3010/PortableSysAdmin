@@ -35,6 +35,15 @@ Copy-Item -Path "$SourceDir\scripts" -Destination "$InstallDir\" -Recurse -Force
 if (Test-Path "$SourceDir\tools") {
     Copy-Item -Path "$SourceDir\tools" -Destination "$InstallDir\" -Recurse -Force
 }
+if (Test-Path "$SourceDir\python_portable") {
+    Copy-Item -Path "$SourceDir\python_portable" -Destination "$InstallDir\" -Recurse -Force
+}
+if (Test-Path "$SourceDir\bin") {
+    Copy-Item -Path "$SourceDir\bin" -Destination "$InstallDir\" -Recurse -Force
+}
+if (Test-Path "$SourceDir\models") {
+    Copy-Item -Path "$SourceDir\models" -Destination "$InstallDir\" -Recurse -Force
+}
 if (Test-Path "$SourceDir\POCKET_REFERENCE.html") {
     Copy-Item -Path "$SourceDir\POCKET_REFERENCE.html" -Destination "$InstallDir\" -Force
 }
@@ -49,8 +58,14 @@ New-Item -ItemType Directory -Path "$InstallDir\logs" -Force | Out-Null
 $CmdPath = "$InstallDir\portablesysadmin.cmd"
 @"
 @echo off
+setlocal
 cd /d "$InstallDir"
-python app\main.py %*
+set "PYTHONPATH=$InstallDir;$InstallDir\app;%PYTHONPATH%"
+if exist "$InstallDir\python_portable\python.exe" (
+    "$InstallDir\python_portable\python.exe" app\main.py %*
+) else (
+    python app\main.py %*
+)
 "@ | Set-Content -Path $CmdPath -Encoding ASCII
 
 # Add to PATH

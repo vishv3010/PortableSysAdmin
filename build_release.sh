@@ -32,6 +32,16 @@ if [ $? -eq 0 ]; then
     mkdir -p "$RELEASE_PATH/python_portable"
     unzip -q /tmp/$PYTHON_ZIP -d "$RELEASE_PATH/python_portable/"
     rm /tmp/$PYTHON_ZIP
+    # Configure python311._pth so embedded python imports from root and app/
+    if [ -f "$RELEASE_PATH/python_portable/python311._pth" ]; then
+        cat << 'EOF' > "$RELEASE_PATH/python_portable/python311._pth"
+python311.zip
+.
+..
+..\app
+import site
+EOF
+    fi
     echo "Portable Python bundled successfully!"
 else
     echo "Warning: Failed to download Portable Python."
