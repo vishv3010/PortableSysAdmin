@@ -286,17 +286,19 @@ class HardwareDiagnostic(BaseDiagnostic):
                     result["count"] = len(result["devices"])
 
             elif self.platform == "windows":
-                ps_cmd = "Get-CimInstance Win32_PnPEntity | Where-Object { $_.PNPClass -eq 'USB' -and $_.Status -eq 'OK' } | Select-Object -ExpandProperty Name | ConvertTo-Json -Compress"
-                out = subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], capture_output=True, text=True, timeout=4)
-                if out.returncode == 0 and out.stdout.strip():
-                    try:
+                ps_cmd = "@(Get-CimInstance Win32_PnPEntity -Filter \"PNPClass='USB'\" -ErrorAction SilentlyContinue | Where-Object { $_.Name } | Select-Object -ExpandProperty Name) | ConvertTo-Json -Compress"
+                try:
+                    out = subprocess.run(["powershell", "-NoProfile", "-Command", ps_cmd], capture_output=True, text=True, timeout=5)
+                    if out.returncode == 0 and out.stdout.strip():
                         data = json.loads(out.stdout)
                         if isinstance(data, str):
                             data = [data]
-                        result["devices"] = data[:15]
-                        result["count"] = len(data)
-                    except Exception:
-                        pass
+                        elif not isinstance(data, list):
+                            data = []
+                        result["devices"] = [str(d) for d in data[:15] if d]
+                        result["count"] = len(result["devices"])
+                except (subprocess.TimeoutExpired, Exception):
+                    pass
         except Exception as e:
             if self.logger:
                 self.logger.warning(f"USB diagnostic error: {e}")

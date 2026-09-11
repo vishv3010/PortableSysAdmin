@@ -43,6 +43,8 @@ class HardwareTester:
   {Colors.GREEN}[5]{Colors.ENDC} 🖥️  Display RGB Color & Dead-Pixel Test
   {Colors.CYAN}[6]{Colors.ENDC} 🩺 Run Full Automated Hardware Audit (Summary)
   
+  {Colors.BOLD}{Colors.YELLOW}[7]{Colors.ENDC} 🔄 Safe Audio & Peripheral Driver/Service Reset (Instant Fix)
+  
   {Colors.FAIL}[0]{Colors.ENDC} Back to Main Menu
 """)
             choice = UI.prompt("Select a hardware test: ").strip()
@@ -59,6 +61,8 @@ class HardwareTester:
                 self.test_display()
             elif choice == '6':
                 self.test_automated_audit()
+            elif choice == '7':
+                self.reset_audio_and_peripherals()
             elif choice in ['0', 'back', 'q', 'exit']:
                 break
             else:
@@ -94,14 +98,23 @@ class HardwareTester:
         ans = UI.prompt("\nDid you hear the audio sound through your speakers/headphones? [y/N]: ").strip().lower()
         if ans in ['y', 'yes']:
             UI.success("Audio Output Diagnostic: PASS - Speakers and sound pipeline working properly.")
+            input(f"\n{Colors.BOLD}Press Enter to return to Hardware Menu...{Colors.ENDC}")
         else:
             UI.error("Audio Output Diagnostic: FAIL - No sound heard.")
             print("\nTroubleshooting Suggestions:")
             print("  • Check hardware volume knob and mute keys.")
             print("  • Check if default audio output sink is set correctly (PulseAudio/PipeWire/Windows Sound).")
-            print("  • Ensure audio kernel modules (snd-hda-intel) or Windows audio drivers are installed.")
-
-        input(f"\n{Colors.BOLD}Press Enter to return to Hardware Menu...{Colors.ENDC}")
+            print("  • Restart Windows Audio service (AudioSrv) or Linux sound daemons.")
+            
+            fix_ans = UI.prompt("\nWould you like to run the Safe Audio Subsystem Reset now to fix this? [Y/n]: ").strip().lower()
+            if fix_ans not in ['n', 'no']:
+                self.reset_audio_and_peripherals()
+                retry = UI.prompt("\nWould you like to replay the audio chime test? [y/N]: ").strip().lower()
+                if retry in ['y', 'yes']:
+                    self.test_audio()
+                    return
+            else:
+                input(f"\n{Colors.BOLD}Press Enter to return to Hardware Menu...{Colors.ENDC}")
 
     def _play_test_tone(self) -> bool:
         """Plays a pure in-memory generated dual-tone WAV chime without third-party libraries."""
@@ -195,6 +208,11 @@ Instructions:
   • Watch the key registry update in real time with key name and hex code.
   • Press {Colors.BOLD}ESC{Colors.ENDC} or type {Colors.BOLD}'q'{Colors.ENDC} three times consecutively to finish.
 """)
+        if not sys.stdin.isatty():
+            UI.warning("Interactive keyboard matrix test requires an interactive console/TTY.")
+            input("\nPress Enter to return...")
+            return
+
         pressed_keys = set()
         q_count = 0
         total_keystrokes = 0
@@ -399,9 +417,13 @@ Instructions:
         # 3. USB Devices
         print(f"\n{Colors.BOLD}[USB HUBS, BRIDGES & PERIPHERALS]{Colors.ENDC}")
         usb_devs = ev.get("usb_devices", {}).get("devices", [])
+        yellow = getattr(Colors, "YELLOW", Colors.WARNING)
         if usb_devs:
             for u in usb_devs:
-                print(f"  • {Colors.YELLOW}{u}{Colors.ENDC}")
+                try:
+                    print(f"  • {yellow}{u}{Colors.ENDC}")
+                except Exception:
+                    print(f"  • {u}")
         else:
             print("  • No external USB devices enumerated.")
 
@@ -426,6 +448,11 @@ Instructions:
   • Inspect your screen visually for discolored dots or uneven bleeding.
   • Type {Colors.BOLD}'q'{Colors.ENDC} and press Enter to exit anytime.
 """)
+        if not sys.stdin.isatty():
+            UI.warning("Display color test requires an interactive console/TTY.")
+            input("\nPress Enter to return...")
+            return
+
         input("Press Enter to begin color test...")
 
         colors = [
@@ -468,6 +495,38 @@ Instructions:
             UI.success(f"Hardware Status: {res.message}")
         else:
             UI.warning(f"Hardware Status: {res.message}")
+
+        input(f"\n{Colors.BOLD}Press Enter to return to Hardware Menu...{Colors.ENDC}")
+
+    # =========================================================================
+    # 7. SAFE AUDIO & PERIPHERAL RESET
+    # =========================================================================
+    def reset_audio_and_peripherals(self):
+        UI.clear_screen(self.os_type)
+        print(f"\n{Colors.HEADER}=== 🔄 SAFE AUDIO & PERIPHERAL SUBSYSTEM RESET ==={Colors.ENDC}\n")
+        print("Safety Guarantee: 100% Non-Destructive. Never touches personal files or driver binaries.")
+        print("Actions: Restarts audio services/daemons & triggers Plug-and-Play bus re-enumeration.\n")
+
+        if self.os_type == "windows":
+            from remediation.windows.audio_reset import RestartWindowsAudioAndPnP
+            action = RestartWindowsAudioAndPnP(self.platform_info, self.logger)
+            UI.info("Stopping & restarting Windows Audio services (AudioSrv)...")
+            success, msg = action.execute(dry_run=False)
+            if success:
+                UI.success(msg)
+            else:
+                UI.warning(msg)
+            print(f"\n{Colors.CYAN}[TIP] Display Driver Frozen or Glitching?{Colors.ENDC}")
+            print(f"  Press {Colors.BOLD}Win + Ctrl + Shift + B{Colors.ENDC} to instantly restart your Windows graphics driver without rebooting!")
+        else:
+            from remediation.linux.audio_reset import RestartLinuxAudioAndUdev
+            action = RestartLinuxAudioAndUdev(self.platform_info, self.logger)
+            UI.info("Restarting user sound daemons (PipeWire/PulseAudio) & rescanning hardware buses...")
+            success, msg = action.execute(dry_run=False)
+            if success:
+                UI.success(msg)
+            else:
+                UI.warning(msg)
 
         input(f"\n{Colors.BOLD}Press Enter to return to Hardware Menu...{Colors.ENDC}")
 
