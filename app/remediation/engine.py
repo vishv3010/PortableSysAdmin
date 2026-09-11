@@ -7,11 +7,15 @@ from .policy import RemediationPolicy
 
 class RemediationEngine:
     def __init__(self, logger, session_log_dir, is_admin, current_user):
+        import tempfile
         self.logger = logger
+        # Ensure session_log_dir is valid across Windows and Linux
+        if not session_log_dir or (session_log_dir == "/tmp" and os.name == "nt") or not os.path.exists(os.path.dirname(os.path.abspath(session_log_dir))):
+            session_log_dir = tempfile.gettempdir()
         self.session_log_dir = session_log_dir
         self.is_admin = is_admin
         self.current_user = current_user
-        self.audit_log_path = os.path.join(session_log_dir, "actions.json")
+        self.audit_log_path = os.path.join(self.session_log_dir, "actions.json")
 
     def _log_audit(self, action_id: str, action_name: str, risk: str, dry_run: bool, success: bool, message: str):
         from datetime import timezone
@@ -25,8 +29,13 @@ class RemediationEngine:
             "success": success,
             "message": message
         }
-        with open(self.audit_log_path, 'a') as f:
-            f.write(json.dumps(record) + "\n")
+        try:
+            os.makedirs(os.path.dirname(os.path.abspath(self.audit_log_path)), exist_ok=True)
+            with open(self.audit_log_path, 'a') as f:
+                f.write(json.dumps(record) + "\n")
+        except Exception as e:
+            if self.logger:
+                self.logger.warning(f"Could not append to audit log {self.audit_log_path}: {e}")
         if self.logger:
             self.logger.info(f"AUDIT: {record}")
 
@@ -40,6 +49,10 @@ class RemediationEngine:
         
         if meta['requires_admin'] and not self.is_admin:
             UI.error("Administrator/Root privileges required for this action. Aborting.")
+            if os.name == "nt":
+                print("\n[TIP] To apply this fix, right-click 'START.bat' and select 'Run as administrator'.")
+            else:
+                print("\n[TIP] To apply this fix, re-run the toolkit with: sudo ./START.sh")
             self._log_audit(meta['id'], meta['name'], meta['risk'], dry_run, False, "Privilege check failed.")
             return False
 

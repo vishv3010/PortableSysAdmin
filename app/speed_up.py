@@ -18,11 +18,14 @@ class SafeSystemSpeedUp:
       - Cross-Platform: Native support for Ubuntu/Debian/Linux & Windows.
     """
 
-    def __init__(self, platform_info, logger=None, admin_status=False, session_log_dir="/tmp"):
+    def __init__(self, platform_info, logger=None, admin_status=False, session_log_dir=None):
+        import tempfile
         self.platform_info = platform_info
         self.logger = logger
         self.admin_status = admin_status
-        self.session_log_dir = session_log_dir or "/tmp"
+        if not session_log_dir or (session_log_dir == "/tmp" and os.name == "nt"):
+            session_log_dir = tempfile.gettempdir()
+        self.session_log_dir = session_log_dir
         self.os_type = platform_info.get("os", "linux").lower()
 
     def get_metrics(self) -> dict:

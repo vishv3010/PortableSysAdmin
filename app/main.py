@@ -281,7 +281,7 @@ def main():
 
         elif choice == '6':
             from triage import QuickTriage
-            triage = QuickTriage(platform_info, logger)
+            triage = QuickTriage(platform_info, logger, session_log_dir=session_log_dir, admin_status=admin_status, current_user=current_user)
             triage.run()
 
         elif choice == '7':

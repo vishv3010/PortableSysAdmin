@@ -7,9 +7,13 @@ from ui import UI, Colors
 
 
 class QuickTriage:
-    def __init__(self, platform_info, logger):
+    def __init__(self, platform_info, logger=None, session_log_dir=None, admin_status=None, current_user=None):
+        import tempfile
         self.platform_info = platform_info
         self.logger = logger
+        self.session_log_dir = session_log_dir or tempfile.gettempdir()
+        self.admin_status = admin_status
+        self.current_user = current_user
         self.os_type = platform_info.get("os", "linux").lower()
 
     def run(self):
@@ -36,9 +40,33 @@ class QuickTriage:
                     used_ram_gb = used_kb / (1024 * 1024)
                     ram_pct = (used_kb / total_kb) * 100
             else:
-                ram_pct = 40.0
-                total_ram_gb = 16.0
-                used_ram_gb = 6.4
+                try:
+                    import ctypes
+                    class MEMORYSTATUSEX(ctypes.Structure):
+                        _fields_ = [
+                            ("dwLength", ctypes.c_ulong),
+                            ("dwMemoryLoad", ctypes.c_ulong),
+                            ("ullTotalPhys", ctypes.c_ulonglong),
+                            ("ullAvailPhys", ctypes.c_ulonglong),
+                            ("ullTotalPageFile", ctypes.c_ulonglong),
+                            ("ullAvailPageFile", ctypes.c_ulonglong),
+                            ("ullTotalVirtual", ctypes.c_ulonglong),
+                            ("ullAvailVirtual", ctypes.c_ulonglong),
+                            ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+                        ]
+                    stat = MEMORYSTATUSEX()
+                    stat.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+                    if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(stat)):
+                        total_ram_gb = stat.ullTotalPhys / (1024 ** 3)
+                        avail_ram_gb = stat.ullAvailPhys / (1024 ** 3)
+                        used_ram_gb = total_ram_gb - avail_ram_gb
+                        ram_pct = float(stat.dwMemoryLoad)
+                    else:
+                        raise RuntimeError("GlobalMemoryStatusEx returned false")
+                except Exception:
+                    ram_pct = 40.0
+                    total_ram_gb = 16.0
+                    used_ram_gb = 6.4
 
             status = "PASS" if ram_pct < 85 else ("WARN" if ram_pct < 95 else "FAIL")
             detail = f"{ram_pct:.1f}% ({used_ram_gb:.1f} GB / {total_ram_gb:.1f} GB)"
@@ -141,7 +169,9 @@ class QuickTriage:
                 if target_id in all_actions:
                     action_cls = all_actions[target_id]
                     action_inst = action_cls(self.platform_info, self.logger)
-                    engine = RemediationEngine(self.logger, "/tmp", is_admin(), get_current_user())
+                    admin = self.admin_status if self.admin_status is not None else is_admin()
+                    user = self.current_user or get_current_user()
+                    engine = RemediationEngine(self.logger, self.session_log_dir, admin, user)
                     engine.run_remediation(action_inst, dry_run=False)
                 else:
                     UI.error(f"Remediation action '{target_id}' not found in registry.")

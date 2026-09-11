@@ -9,6 +9,21 @@ set "PROJECT_ROOT=%~dp0"
 cd /d "%PROJECT_ROOT%"
 set "PYTHONPATH=%PROJECT_ROOT%;%PROJECT_ROOT%app;%PYTHONPATH%"
 
+:: Check for Administrator privileges
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [INFO] Administrator privileges not detected.
+    echo [INFO] Requesting elevated Administrator privileges via Windows UAC...
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath '%~f0' -Verb RunAs" >nul 2>&1
+    if %errorlevel% equ 0 (
+        exit /b 0
+    )
+    echo [WARNING] Elevation was declined or not permitted.
+    echo [WARNING] Running with standard user privileges.
+    echo [WARNING] Note: Hardware repairs and system remediation will require Administrator rights.
+    echo.
+)
+
 :: Ensure bundled Portable Python ._pth file includes app directory if present
 if exist "%PROJECT_ROOT%python_portable\python311._pth" (
     findstr /x /c:"..\app" "%PROJECT_ROOT%python_portable\python311._pth" >nul 2>&1
