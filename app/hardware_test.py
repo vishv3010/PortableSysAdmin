@@ -554,15 +554,32 @@ Instructions:
             verified, v_msg = action.verify()
 
             if success:
-                UI.success("Touchpad configuration repaired successfully!")
-                print(f"Details: {msg}")
+                UI.success("Touchpad deep repair pipeline completed successfully!")
+                print("\n" + "-"*50)
+                for line in msg.split("\n"):
+                    if line.strip():
+                        print(f"  {line.strip()}")
+                print("-"*50)
                 if verified:
                     UI.success(v_msg)
+
+                # Prompt to restart Windows Explorer to refresh window hooks
+                ans = UI.prompt("\nWould you like to restart Windows Explorer now to apply new mouse hooks instantly? [Y/n]: ").strip().lower()
+                if ans not in ['n', 'no']:
+                    UI.info("Restarting Windows Explorer shell...")
+                    try:
+                        subprocess.run("taskkill /f /im explorer.exe && start explorer.exe", shell=True, timeout=5)
+                        UI.success("Windows Explorer shell restarted.")
+                    except Exception:
+                        pass
             else:
                 UI.error(f"Failed to apply touchpad fix: {msg}")
 
-            print(f"\n{Colors.CYAN}Try scrolling now with two fingers on this window!{Colors.ENDC}")
-            print("If your laptop requires an OEM driver restart, a quick sign-out or reboot will finalize all changes.")
+            # Offer live scroll test
+            ans_test = UI.prompt("\nWould you like to open the Live Two-Finger Scroll Test Zone? [Y/n]: ").strip().lower()
+            if ans_test not in ['n', 'no']:
+                self.test_touchpad_scroll_live()
+                return
 
         else:
             from remediation.linux.touchpad import FixTwoFingerScrollLinux
@@ -577,8 +594,24 @@ Instructions:
             else:
                 UI.error(f"Failed to apply Linux touchpad fix: {msg}")
 
-            print(f"\n{Colors.CYAN}Try scrolling now with two fingers on this window!{Colors.ENDC}")
+            ans_test = UI.prompt("\nWould you like to open the Live Two-Finger Scroll Test Zone? [Y/n]: ").strip().lower()
+            if ans_test not in ['n', 'no']:
+                self.test_touchpad_scroll_live()
+                return
 
+        input(f"\n{Colors.BOLD}Press Enter to return to Hardware Menu...{Colors.ENDC}")
+
+    def test_touchpad_scroll_live(self):
+        """Displays a scrollable text area so the user can verify two-finger scrolling."""
+        UI.clear_screen(self.os_type)
+        print(f"\n{Colors.HEADER}=== 👆 LIVE TWO-FINGER SCROLL TEST ZONE ==={Colors.ENDC}\n")
+        print("Instructions: Place two fingers on your touchpad and scroll up and down.\n")
+        for i in range(1, 41):
+            if i % 5 == 0:
+                print(f"  [Line {i:02d}] {Colors.GREEN}🚀 >>> TWO-FINGER SCROLL IS WORKING! <<< 🚀{Colors.ENDC}")
+            else:
+                print(f"  [Line {i:02d}] Keep scrolling with two fingers to test smooth motion...")
+        print(f"\n{Colors.CYAN}If you were able to scroll smoothly through lines 1 to 40, your touchpad gestures are active!{Colors.ENDC}")
         input(f"\n{Colors.BOLD}Press Enter to return to Hardware Menu...{Colors.ENDC}")
 
 
