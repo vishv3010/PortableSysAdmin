@@ -44,6 +44,7 @@ class HardwareTester:
   {Colors.CYAN}[6]{Colors.ENDC} 🩺 Run Full Automated Hardware Audit (Summary)
   
   {Colors.BOLD}{Colors.YELLOW}[7]{Colors.ENDC} 🔄 Safe Audio & Peripheral Driver/Service Reset (Instant Fix)
+  {Colors.BOLD}{Colors.CYAN}[8]{Colors.ENDC} 👆 Fix Two-Finger Touchpad Scrolling (1-Click Auto-Fix)
   
   {Colors.FAIL}[0]{Colors.ENDC} Back to Main Menu
 """)
@@ -63,6 +64,8 @@ class HardwareTester:
                 self.test_automated_audit()
             elif choice == '7':
                 self.reset_audio_and_peripherals()
+            elif choice == '8':
+                self.fix_touchpad_scroll()
             elif choice in ['0', 'back', 'q', 'exit']:
                 break
             else:
@@ -527,6 +530,54 @@ Instructions:
                 UI.success(msg)
             else:
                 UI.warning(msg)
+
+        input(f"\n{Colors.BOLD}Press Enter to return to Hardware Menu...{Colors.ENDC}")
+
+    # =========================================================================
+    # 8. FIX TOUCHPAD TWO-FINGER SCROLL
+    # =========================================================================
+    def fix_touchpad_scroll(self):
+        UI.clear_screen(self.os_type)
+        print(f"\n{Colors.HEADER}=== 👆 FIX TWO-FINGER TOUCHPAD SCROLLING (1-CLICK FIX) ==={Colors.ENDC}\n")
+        print("Diagnoses and repairs the #1 most common laptop touchpad issue:")
+        print("  • Windows 10/11 Precision Touchpad PanEnabled registry flags")
+        print("  • Synaptics, Elantech & ALPS OEM driver gesture keys")
+        print("  • Human Interface Device Service (hidserv) state")
+        print("  • Linux GNOME GSettings & X11/libinput scroll method properties\n")
+
+        UI.info("Applying multi-touch touchpad repair...")
+
+        if self.os_type == "windows":
+            from remediation.windows.touchpad import FixTwoFingerScrollWindows
+            action = FixTwoFingerScrollWindows(self.platform_info, self.logger)
+            success, msg = action.execute(dry_run=False)
+            verified, v_msg = action.verify()
+
+            if success:
+                UI.success("Touchpad configuration repaired successfully!")
+                print(f"Details: {msg}")
+                if verified:
+                    UI.success(v_msg)
+            else:
+                UI.error(f"Failed to apply touchpad fix: {msg}")
+
+            print(f"\n{Colors.CYAN}Try scrolling now with two fingers on this window!{Colors.ENDC}")
+            print("If your laptop requires an OEM driver restart, a quick sign-out or reboot will finalize all changes.")
+
+        else:
+            from remediation.linux.touchpad import FixTwoFingerScrollLinux
+            action = FixTwoFingerScrollLinux(self.platform_info, self.logger)
+            success, msg = action.execute(dry_run=False)
+            verified, v_msg = action.verify()
+
+            if success:
+                UI.success(msg)
+                if verified:
+                    UI.success(v_msg)
+            else:
+                UI.error(f"Failed to apply Linux touchpad fix: {msg}")
+
+            print(f"\n{Colors.CYAN}Try scrolling now with two fingers on this window!{Colors.ENDC}")
 
         input(f"\n{Colors.BOLD}Press Enter to return to Hardware Menu...{Colors.ENDC}")
 
