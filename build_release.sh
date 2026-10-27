@@ -22,6 +22,8 @@ mkdir -p "$RELEASE_PATH/logs"
 # Copy root files
 cp START.bat "$RELEASE_PATH/"
 cp START.sh "$RELEASE_PATH/"
+cp STOP.bat "$RELEASE_PATH/" 2>/dev/null || true
+cp STOP.sh "$RELEASE_PATH/" 2>/dev/null || true
 cp README.md "$RELEASE_PATH/"
 cp POCKET_REFERENCE.html "$RELEASE_PATH/" 2>/dev/null || true
 

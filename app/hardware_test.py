@@ -172,7 +172,7 @@ class HardwareTester:
 
         else:
             # Linux: Try pw-play, paplay, aplay
-            temp_wav = "/tmp/sysadmin_audio_test.wav"
+            temp_wav = os.path.join(tempfile.gettempdir(), "sysadmin_audio_test.wav")
             try:
                 with open(temp_wav, "wb") as f:
                     f.write(wav_data)

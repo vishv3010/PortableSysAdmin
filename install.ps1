@@ -62,9 +62,9 @@ setlocal
 cd /d "$InstallDir"
 set "PYTHONPATH=$InstallDir;$InstallDir\app;%PYTHONPATH%"
 if exist "$InstallDir\python_portable\python.exe" (
-    "$InstallDir\python_portable\python.exe" app\main.py %*
+    "$InstallDir\python_portable\python.exe" "$InstallDir\app\main.py" %*
 ) else (
-    python app\main.py %*
+    python "$InstallDir\app\main.py" %*
 )
 "@ | Set-Content -Path $CmdPath -Encoding ASCII
 

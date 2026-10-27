@@ -31,7 +31,7 @@ class RemediationEngine:
         }
         try:
             os.makedirs(os.path.dirname(os.path.abspath(self.audit_log_path)), exist_ok=True)
-            with open(self.audit_log_path, 'a') as f:
+            with open(self.audit_log_path, 'a', encoding='utf-8') as f:
                 f.write(json.dumps(record) + "\n")
         except Exception as e:
             if self.logger:

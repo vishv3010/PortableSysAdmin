@@ -10,8 +10,17 @@ export PYTHONPATH="$PROJECT_ROOT:$PROJECT_ROOT/app:$PYTHONPATH"
 
 # Check for root, elevate if needed
 if [ "$EUID" -ne 0 ]; then
-    echo "[INFO] Elevating privileges to run SysAdmin Toolkit..."
-    exec sudo bash "$SCRIPT_PATH" "$@"
+    echo "[INFO] Administrator/root privileges recommended."
+    if command -v sudo >/dev/null 2>&1; then
+        echo "[INFO] Requesting elevated privileges via sudo..."
+        if sudo -v 2>/dev/null; then
+            exec sudo bash "$SCRIPT_PATH" "$@"
+        fi
+        echo "[WARNING] Sudo elevation was declined or unavailable."
+        echo "[WARNING] Running with standard user privileges."
+        echo "[WARNING] Note: Hardware repairs and system remediation will require root rights."
+        echo ""
+    fi
 fi
 
 # Define cleanup trap to ensure background AI processes are terminated on exit
@@ -45,7 +54,7 @@ fi
 
 # Launch the main application
 echo "[INFO] Starting Toolkit UI..."
-"$PYTHON_EXE" app/main.py
+"$PYTHON_EXE" "$PROJECT_ROOT/app/main.py"
 
 # Cleanup AI Server when UI closes
 cleanup

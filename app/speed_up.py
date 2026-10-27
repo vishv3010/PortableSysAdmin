@@ -640,7 +640,7 @@ class SafeSystemSpeedUp:
                 "safety_verified": True,
                 "zero_data_loss": True
             }
-            with open(audit_file, "a") as f:
+            with open(audit_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(record) + "\n")
             if self.logger:
                 self.logger.info(f"AUDIT_SPEEDUP: {record}")
