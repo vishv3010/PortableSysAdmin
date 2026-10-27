@@ -73,6 +73,17 @@ def open_in_browser(target_url_or_file: str, platform_os: str) -> bool:
 
 
 def main():
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+        except Exception:
+            try:
+                os.system('')
+            except Exception:
+                pass
+
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
     # 1. Setup Logging & Session
@@ -85,11 +96,15 @@ def main():
     current_user = get_current_user()
     
     while True:
-        UI.clear_screen(platform_info['os'])
-        UI.print_banner(platform_info, session_id, admin_status)
-        UI.print_menu()
-        
-        choice = UI.prompt("Select a module: ")
+        try:
+            UI.clear_screen(platform_info['os'])
+            UI.print_banner(platform_info, session_id, admin_status)
+            UI.print_menu()
+            
+            choice = UI.prompt("Select a module: ")
+        except (KeyboardInterrupt, EOFError):
+            print("\n[INFO] Toolkit closed by user. Goodbye!")
+            break
         
         if choice == '1':
             from diagnostics.history import DiagnosticHistory

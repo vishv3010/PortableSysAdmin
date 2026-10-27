@@ -73,6 +73,17 @@ def open_in_browser(target_url_or_file: str, platform_os: str) -> bool:
 
 
 def main():
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            kernel32.SetConsoleMode(kernel32.GetStdHandle(-11), 7)
+        except Exception:
+            try:
+                os.system('')
+            except Exception:
+                pass
+
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
     # 1. Setup Logging & Session
@@ -85,11 +96,15 @@ def main():
     current_user = get_current_user()
     
     while True:
-        UI.clear_screen(platform_info['os'])
-        UI.print_banner(platform_info, session_id, admin_status)
-        UI.print_menu()
-        
-        choice = UI.prompt("Select a module: ")
+        try:
+            UI.clear_screen(platform_info['os'])
+            UI.print_banner(platform_info, session_id, admin_status)
+            UI.print_menu()
+            
+            choice = UI.prompt("Select a module: ")
+        except (KeyboardInterrupt, EOFError):
+            print("\n[INFO] Toolkit closed by user. Goodbye!")
+            break
         
         if choice == '1':
             from diagnostics.history import DiagnosticHistory
@@ -115,7 +130,7 @@ def main():
                 result = diag.run()
                 print(result.to_json())
                 history.append_record(result)
-                with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a') as f:
+                with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a', encoding='utf-8') as f:
                     f.write(json.dumps(result.to_dict()) + "\n")
                 
             input("\nPress Enter to continue...")
@@ -126,7 +141,7 @@ def main():
             result = diag.run()
             print(result.to_json())
             
-            with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a') as f:
+            with open(os.path.join(session_log_dir, 'diagnostics.json'), 'a', encoding='utf-8') as f:
                 f.write(json.dumps(result.to_dict()) + "\n")
                 
             input("\nPress Enter to continue...")
@@ -213,7 +228,7 @@ def main():
 
             if sub_choice == '1':
                 if os.path.exists(prompt_file):
-                    with open(prompt_file, 'r') as f:
+                    with open(prompt_file, 'r', encoding='utf-8', errors='replace') as f:
                         content = f.read()
                     copied = copy_to_clipboard(content, platform_info.get("os", "linux"))
                     if copied:
@@ -245,7 +260,7 @@ def main():
                     continue
 
                 diagnostics = []
-                with open(diag_path, 'r') as f:
+                with open(diag_path, 'r', encoding='utf-8', errors='replace') as f:
                     for line in f:
                         if line.strip():
                             diagnostics.append(json.loads(line))
@@ -281,7 +296,7 @@ def main():
 
         elif choice == '6':
             from triage import QuickTriage
-            triage = QuickTriage(platform_info, logger)
+            triage = QuickTriage(platform_info, logger, session_log_dir=session_log_dir, admin_status=admin_status, current_user=current_user)
             triage.run()
 
         elif choice == '7':

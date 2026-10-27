@@ -100,7 +100,7 @@ Based strictly on this machine's operating system ({os_info}), please provide:
         diag_path = os.path.join(self.session_log_dir, "diagnostics.json")
         diagnostics = []
         if os.path.exists(diag_path):
-            with open(diag_path, 'r') as f:
+            with open(diag_path, 'r', encoding='utf-8', errors='replace') as f:
                 for line in f:
                     if line.strip():
                         diagnostics.append(json.loads(line))
@@ -109,7 +109,7 @@ Based strictly on this machine's operating system ({os_info}), please provide:
         audit_path = os.path.join(self.session_log_dir, "actions.json")
         actions = []
         if os.path.exists(audit_path):
-            with open(audit_path, 'r') as f:
+            with open(audit_path, 'r', encoding='utf-8', errors='replace') as f:
                 for line in f:
                     if line.strip():
                         actions.append(json.loads(line))
@@ -118,7 +118,7 @@ Based strictly on this machine's operating system ({os_info}), please provide:
         ai_prompt_text = self.generate_ai_prompt(diagnostics, actions)
         prompt_out_file = os.path.join(self.session_log_dir, "ai_prompt.txt")
         try:
-            with open(prompt_out_file, 'w') as f:
+            with open(prompt_out_file, 'w', encoding='utf-8') as f:
                 f.write(ai_prompt_text)
         except Exception:
             pass
@@ -467,7 +467,7 @@ Based strictly on this machine's operating system ({os_info}), please provide:
 """
         # Save report
         out_file = os.path.join(self.session_log_dir, "final-report.html")
-        with open(out_file, 'w') as f:
+        with open(out_file, 'w', encoding='utf-8') as f:
             f.write(html)
             
         return out_file
