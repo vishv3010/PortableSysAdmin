@@ -66,6 +66,14 @@ if exist "$InstallDir\python_portable\python.exe" (
 ) else (
     python "$InstallDir\app\main.py" %*
 )
+set "APP_ERR=%errorlevel%"
+echo %cmdcmdline% | findstr /i /c:"/c" >nul 2>&1
+if not errorlevel 1 (
+    echo.
+    echo [INFO] Command Prompt will remain open. Type 'exit' to close.
+    cmd /k
+)
+exit /b %APP_ERR%
 "@ | Set-Content -Path $CmdPath -Encoding ASCII
 
 # Add to PATH

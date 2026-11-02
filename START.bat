@@ -23,8 +23,10 @@ if !IS_ADMIN! neq 1 (
     echo [INFO] Administrator privileges not detected.
     echo [INFO] Requesting elevated Administrator privileges via Windows UAC...
     
-    :: Elevate via cmd.exe through PowerShell RunAs with explicit path handling and error capture
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "$p='%~f0'; $d='%~dp0.'; try { Start-Process -FilePath 'cmd.exe' -ArgumentList ('/c cd /d ""' + $d + '"" && ""' + $p + '""') -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
+    :: Elevate via cmd.exe through PowerShell RunAs with explicit working directory and /k switch to prevent automatic closing
+    set "TOOLKIT_BAT=%~f0"
+    set "TOOLKIT_DIR=%~dp0"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "$p = $env:TOOLKIT_BAT; $d = $env:TOOLKIT_DIR; try { Start-Process -FilePath 'cmd.exe' -ArgumentList ('/k call \"{0}\"' -f $p) -WorkingDirectory $d -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
     if !errorlevel! equ 0 (
         exit /b 0
     )
@@ -105,7 +107,15 @@ if not defined PYTHON_EXE (
     echo 3. Or install Python 3.8+ on Windows and check 'Add python.exe to PATH'
     echo ====================================================
     echo.
-    pause
+    echo [INFO] Command Prompt will remain open for troubleshooting.
+    echo [INFO] Type 'START.bat' after fixing or type 'exit' to close.
+    echo.
+    echo %cmdcmdline% | findstr /i /c:"/c" >nul 2>&1
+    if not errorlevel 1 (
+        cmd /k
+    ) else (
+        pause
+    )
     exit /b 1
 )
 
@@ -116,9 +126,11 @@ set "APP_EXIT_CODE=%errorlevel%"
 
 if %APP_EXIT_CODE% neq 0 (
     echo.
+    echo ====================================================
     echo [WARNING] Toolkit exited with return code %APP_EXIT_CODE%.
     echo If this was unexpected, please review logs in:
     echo   %PROJECT_ROOT%logs
+    echo ====================================================
     echo.
 )
 
@@ -126,4 +138,18 @@ if %APP_EXIT_CODE% neq 0 (
 echo [INFO] Shutting down AI Server...
 taskkill /F /IM llama-server.exe >nul 2>&1
 echo [INFO] Goodbye!
-pause
+echo.
+echo ====================================================
+echo  Toolkit session ended.
+echo  Command Prompt will remain open.
+echo  Type 'START.bat' to restart or 'exit' to close.
+echo ====================================================
+echo.
+
+:: Keep window open and prevent automatic close
+echo %cmdcmdline% | findstr /i /c:"/c" >nul 2>&1
+if not errorlevel 1 (
+    cmd /k
+) else (
+    pause
+)
